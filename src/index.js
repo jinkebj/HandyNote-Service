@@ -1,7 +1,7 @@
-const SERVER_PORT = 3000
-
 const Koa = require('koa')
 const app = new Koa()
+
+const config = require('../config')
 const router = require('./router')
 
 // x-response-time
@@ -23,4 +23,4 @@ app.use(async function (ctx, next) {
 // router
 app.use(router.routes()).use(router.allowedMethods())
 
-app.listen(SERVER_PORT, () => console.log('server started ' + SERVER_PORT))
+app.listen(config.SERVER_PORT, () => console.log('server started ' + config.SERVER_PORT))

@@ -6,10 +6,10 @@ module.exports = {
   target: 'node',
   externals: [nodeExternals()],
   entry: {
-    app: './index.js'
+    app: './src/index.js'
   },
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, '../dist'),
     filename: '[name].bundle.js',
     libraryTarget: 'commonjs2'
   },

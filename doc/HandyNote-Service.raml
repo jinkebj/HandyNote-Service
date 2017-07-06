@@ -14,21 +14,25 @@ mediaType: application/json
       200:
         body:
           example: |
-            array of notes, refer to DB schema -> Notes
+            array of notes, refer to DB schema -> notes
   post:
     description: Add a note
     body:
       example: |
-        refer to DB schema -> Notes
+        refer to DB schema -> notes
     responses:
       201:
         body:
           example: |
-            {
-              result: "success",
-              note_id: "f9131869-895b-47f0-ba2b-e15ca8a5be06"
-            }
-            {
-              result: "fail",
-              fault": "xxx" // some reason
-            }
+            refer to DB schema -> notes
+  /{id}:
+    uriParameters:
+      id:
+        example: a48c3779-eb14-4697-a490-eeb0125196f4
+    delete:
+      description: Delete a note
+      responses:
+        204:
+          body:
+            example:  |
+              refer to DB schema -> notes

@@ -14,4 +14,6 @@ const NoteSchema = new mongoose.Schema(
   }
 )
 
-module.exports = mongoose.model('Notes', NoteSchema)
+NoteSchema.index({ owner: 1 })
+
+module.exports = mongoose.model('Note', NoteSchema)

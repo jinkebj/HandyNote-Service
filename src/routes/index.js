@@ -6,18 +6,18 @@ const router = new KoaRouter({
   prefix: '/api'
 })
 
-const Model = require('./models')
+const Model = require('../models')
 const uuid = require('uuid/v1')
 
 router.get('/notes',
   async (ctx) => {
-    ctx.body = await Model.Notes.find({}).exec()
+    ctx.body = await Model.Note.find()
   }
 )
 
 router.post('/notes',
   async ctx => {
-    ctx.body = await Model.Notes.create({
+    ctx.body = await Model.Note.create({
       _id: uuid(),
       name: 'New Note',
       owner: 'mytest',
@@ -29,13 +29,7 @@ router.post('/notes',
 
 router.delete('/notes/:id',
   async ctx => {
-    const note = await Model.Notes.findByIdAndRemove(ctx.params.id)
-    if (note) {
-      ctx.status = 204
-    }
-    ctx.body = {
-      result: 'success'
-    }
+    ctx.body = await Model.Note.findByIdAndRemove(ctx.params.id)
   }
 )
 

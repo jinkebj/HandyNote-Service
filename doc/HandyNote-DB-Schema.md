@@ -1,6 +1,6 @@
 ** Database Name: HandyNote **
 
-#### 1. Notes
+#### 1. notes
 ```
 {
     _id: "f9131869-895b-47f0-ba2b-e15ca8a5be06", // unique id
@@ -13,4 +13,5 @@
     created_at: NumberLong("1440558536000"),
     updated_at: NumberLong("1440558536000")
 }
+db.notes.createIndex({"owner": 1})
 ```

@@ -2,7 +2,7 @@ const Koa = require('koa')
 const app = new Koa()
 
 const config = require('../config')
-const router = require('./router')
+const router = require('./routes')
 
 // x-response-time
 app.use(async function (ctx, next) {
@@ -21,6 +21,7 @@ app.use(async function (ctx, next) {
 })
 
 // router
-app.use(router.routes()).use(router.allowedMethods())
+app.use(router.routes())
+app.use(router.allowedMethods())
 
-app.listen(config.SERVER_PORT, () => console.log('server started ' + config.SERVER_PORT))
+app.listen(config.SERVER_PORT, () => console.log(new Date() + ' - server started at port: ' + config.SERVER_PORT))

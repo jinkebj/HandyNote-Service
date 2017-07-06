@@ -166,7 +166,7 @@
       .resource-modal li > ul {
         margin-bottom: 1em;
       }
-    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>HandyNote API documentation</h1><p></p><h3 id="db_schema"><a href="#db_schema">DB Schema</a></h3><p><strong>Database Name: HandyNote</strong></p><h4 id="1-notes">1. Notes</h4><pre><code>{
+    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>HandyNote API documentation</h1><p></p><h3 id="db_schema"><a href="#db_schema">DB Schema</a></h3><p><strong>Database Name: HandyNote</strong></p><h4 id="1-notes">1. notes</h4><pre><code>{
     _id: "f9131869-895b-47f0-ba2b-e15ca8a5be06", // unique id
     name: "my first note",
     owner: "xxx@xxx.xx", // refer to user_id
@@ -177,4 +177,5 @@
     created_at: NumberLong("1440558536000"),
     updated_at: NumberLong("1440558536000")
 }
+db.notes.createIndex({"owner": 1})
 </code></pre></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"></ul></div></div></div></div></body></html>

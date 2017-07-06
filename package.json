@@ -5,7 +5,7 @@
   "author": "Jin Ke <jinkebj@126.com>",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec 'npm run lint && node src/index.js'",
+    "dev": "nodemon --exec 'npm run lint && node src/main.js'",
     "build": "standard && node build/build.js",
     "start": "npm run build && node dist/app.bundle.js",
     "lint": "standard"

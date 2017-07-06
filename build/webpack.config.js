@@ -6,7 +6,7 @@ module.exports = {
   target: 'node',
   externals: [nodeExternals()],
   entry: {
-    app: './src/index.js'
+    app: './src/main.js'
   },
   output: {
     path: path.resolve(__dirname, '../dist'),

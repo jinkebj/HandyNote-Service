@@ -1,8 +1,8 @@
-const Koa = require('koa')
-const app = new Koa()
+import Koa from 'koa'
+import config from '../config'
+import router from './routes'
 
-const config = require('../config')
-const router = require('./routes')
+const app = new Koa()
 
 // x-response-time
 app.use(async function (ctx, next) {
@@ -24,4 +24,7 @@ app.use(async function (ctx, next) {
 app.use(router.routes())
 app.use(router.allowedMethods())
 
+// start server
 app.listen(config.SERVER_PORT, () => console.log(new Date() + ' - server started at port: ' + config.SERVER_PORT))
+
+export default app

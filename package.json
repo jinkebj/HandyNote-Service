@@ -5,7 +5,7 @@
   "author": "Jin Ke <jinkebj@126.com>",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec 'npm run lint && node src/main.js'",
+    "dev": "nodemon --exec 'standard && node build/run-dev.js'",
     "build": "standard && node build/build.js",
     "start": "npm run build && node dist/app.bundle.js",
     "lint": "standard"
@@ -19,6 +19,9 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
+    "babel-loader": "^7.1.1",
+    "babel-preset-env": "^1.6.0",
+    "babel-register": "^6.24.1",
     "chalk": "^2.0.1",
     "nodemon": "^1.11.0",
     "ora": "^1.3.0",

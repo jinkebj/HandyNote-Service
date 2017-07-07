@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+import mongoose from 'mongoose'
 
 const NoteSchema = new mongoose.Schema(
   {
@@ -16,4 +16,4 @@ const NoteSchema = new mongoose.Schema(
 
 NoteSchema.index({ owner: 1 })
 
-module.exports = mongoose.model('Note', NoteSchema)
+export default mongoose.model('Note', NoteSchema)

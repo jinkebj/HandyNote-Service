@@ -13,6 +13,26 @@ module.exports = {
     filename: '[name].bundle.js',
     libraryTarget: 'commonjs2'
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              ['env', {
+                'targets': {
+                  'node': 'current'
+                }
+              }]
+            ]
+          }
+        }
+      }
+    ]
+  },
   plugins: [
     new UglifyJSPlugin({
       compress: {

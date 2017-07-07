@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
-
-const config = require('../../config')
+import mongoose from 'mongoose'
+import config from '../../config'
+import Note from './note'
 
 mongoose.Promise = global.Promise
 
@@ -12,6 +12,4 @@ mongoose.connect(config.MONGO_URL, { useMongoClient: true }).then(
   }
 )
 
-const Note = require('./note')
-
-module.exports = { Note }
+export default { Note }

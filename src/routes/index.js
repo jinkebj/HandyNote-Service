@@ -1,13 +1,12 @@
-const KoaBody = require('koa-body')
-const KoaRouter = require('koa-router')
+import KoaBody from 'koa-body'
+import KoaRouter from 'koa-router'
+import Model from '../models'
+import uuid from 'uuid/v1'
 
 const body = new KoaBody()
 const router = new KoaRouter({
   prefix: '/api'
 })
-
-const Model = require('../models')
-const uuid = require('uuid/v1')
 
 router.get('/notes',
   async (ctx) => {
@@ -49,4 +48,4 @@ router.post('/', body,
   }
 )
 
-module.exports = router
+export default router

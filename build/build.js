@@ -1,9 +1,9 @@
-var ora = require('ora')
-var chalk = require('chalk')
-var webpack = require('webpack')
-var webpackConfig = require('./webpack.config')
+const ora = require('ora')
+const chalk = require('chalk')
+const webpack = require('webpack')
+const webpackConfig = require('./webpack.config')
 
-var spinner = ora('building for production...')
+const spinner = ora('building for production...')
 spinner.start()
 
 webpack(webpackConfig, function (err, stats) {

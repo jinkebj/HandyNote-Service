@@ -3,10 +3,10 @@ import mongoose from 'mongoose'
 const NoteSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
-    name: { type: String, required: true, default: 'New Note' },
+    name: { type: String, required: true },
     owner: { type: String, required: true, default: 'mytest' },
     text: { type: String, required: true, default: '' },
-    contents: { type: String, required: true, default: '' }
+    contents: { type: Array, required: true, default: [] }
   },
   {
     versionKey: false,

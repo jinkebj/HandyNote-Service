@@ -9,7 +9,7 @@ const router = new KoaRouter({
 
 router.get('/notes',
   async ctx => {
-    ctx.body = await Model.Note.find()
+    ctx.body = await Model.Note.find().sort('-updated_at')
   }
 )
 

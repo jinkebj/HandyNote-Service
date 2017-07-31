@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import config from '../../config'
 import Note from './note'
+import Folder from './folder'
 
 mongoose.Promise = global.Promise
 
@@ -12,4 +13,4 @@ mongoose.connect(config.MONGO_URL, { useMongoClient: true }).then(
   }
 )
 
-export default { Note }
+export default { Note, Folder }

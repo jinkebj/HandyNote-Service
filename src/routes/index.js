@@ -10,7 +10,7 @@ const router = new KoaRouter({
 
 router.get('/notes',
   async ctx => {
-    ctx.body = await Model.Note.find().select('_id name digest updated_at').sort('-updated_at')
+    ctx.body = await Model.Note.find(ctx.request.query).select('_id name digest updated_at').sort('-updated_at')
   }
 )
 
@@ -34,7 +34,7 @@ router.get('/notes/:id',
 
 router.post('/notes/:id',
   KoaBody({
-    jsonLimit: '1mb'
+    jsonLimit: '20mb'
   }),
   async ctx => {
     const noteJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))

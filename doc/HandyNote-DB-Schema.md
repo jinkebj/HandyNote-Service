@@ -28,8 +28,8 @@ db.notes.createIndex({"folder_id": 1, "name": 1})
     _id: "f9131869-895b-47f0-ba2b-e15ca964be06", // unique id, owner + "-Root", owner + "-Trash"
     name: "myFolder",
     owner: "xxx@xxx.xx", // refer to user_id
-    parent_id: "xxx@xxx.xx-Root", // parent folder id
-    ancestor_ids: ["xxx@xxx.xx-Root"], // array of all ancestors' id
+    parent_id: "f9131869-895b-47f0-ba2b-e15ca8a5be06", // parent folder id
+    ancestor_ids: ["xxx@xxx.xx-Root", "f9131869-895b-47f0-ba2b-e15ca8a5be06"], // array of all ancestors' id
 
     // auto managed
     created_at: ISODate("2017-07-27T09:16:41.579Z"),

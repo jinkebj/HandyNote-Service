@@ -39,7 +39,8 @@ router.post('/notes/:id',
   async ctx => {
     const noteJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
     noteJson.digest = truncate(noteJson.text, 100)
-    ctx.body = await Model.Note.findByIdAndUpdate(ctx.params.id, noteJson)
+    await Model.Note.findByIdAndUpdate(ctx.params.id, noteJson)
+    ctx.body = await Model.Note.findById(ctx.params.id)
   }
 )
 

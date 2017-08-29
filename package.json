@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "HandyNote Service",
   "author": "Jin Ke <jinkebj@126.com>",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "nodemon --exec 'standard && node build/run-dev.js'",
@@ -10,7 +11,6 @@
     "start": "npm run build && node dist/app.bundle.js",
     "lint": "standard"
   },
-  "license": "MIT",
   "dependencies": {
     "kcors": "^2.2.1",
     "koa": "^2.3.0",

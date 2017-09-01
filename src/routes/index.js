@@ -10,7 +10,7 @@ const router = new KoaRouter({
 
 router.get('/notes',
   async ctx => {
-    ctx.body = await Model.Note.find(ctx.request.query).select('_id name digest updated_at').sort('-updated_at')
+    ctx.body = await Model.Note.find(ctx.request.query).select('_id name digest folder_name updated_at').sort('-updated_at')
   }
 )
 
@@ -52,7 +52,10 @@ router.delete('/notes/:id',
 
 router.get('/folders',
   async ctx => {
-    ctx.body = await Model.Folder.find().sort('name')
+    let queryJson = ctx.request.query || {}
+    queryJson.owner = 'mytest'
+    queryJson.deleted = 0
+    ctx.body = await Model.Folder.find(queryJson).sort('name')
   }
 )
 
@@ -63,6 +66,8 @@ router.post('/folders',
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
     folderJson._id = uuid()
+    folderJson.owner = 'mytest'
+    folderJson.deleted = 0
     ctx.body = await Model.Folder.create(folderJson)
   }
 )
@@ -79,11 +84,19 @@ router.post('/folders/:id',
   }),
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
+    folderJson.owner = 'mytest'
+    folderJson.deleted = 0
     ctx.body = await Model.Folder.findByIdAndUpdate(ctx.params.id, folderJson)
   }
 )
 
 router.delete('/folders/:id',
+  async ctx => {
+    ctx.body = await Model.Folder.findByIdAndUpdate(ctx.params.id, {deleted: 1})
+  }
+)
+
+router.delete('/trash/:id',
   async ctx => {
     ctx.body = await Model.Folder.deleteMany({ $or: [{ ancestor_ids: ctx.params.id }, { _id: ctx.params.id }] })
   }

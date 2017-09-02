@@ -18,6 +18,7 @@ const NoteSchema = new mongoose.Schema(
   }
 )
 
+NoteSchema.index({ owner: 1, _id: 1 })
 NoteSchema.index({ owner: 1, deleted: 1, name: 1 })
 NoteSchema.index({ folder_id: 1, deleted: 1, updated_at: -1 })
 

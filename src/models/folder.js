@@ -15,7 +15,8 @@ const FolderSchema = new mongoose.Schema(
   }
 )
 
+FolderSchema.index({ owner: 1, _id: 1 })
 FolderSchema.index({ owner: 1, deleted: 1, name: 1 })
-FolderSchema.index({ ancestor_ids: 1, deleted: 1, name: 1 })
+FolderSchema.index({ owner: 1, ancestor_ids: 1, deleted: 1, name: 1 })
 
 export default mongoose.model('Folder', FolderSchema)

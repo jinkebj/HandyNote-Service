@@ -240,7 +240,7 @@ router.post('/trash/:id/restore',
       }
 
       // update delete flag to 0 for notes under this folder + sub folders
-      await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 0})
+      await Model.Note.updateMany({folder_id: {$in: folderIds}, deleted: 2}, {deleted: 0})
       ctx.body = {toRootFolderFlag: toRootFolderFlag}
     } else {
       if (restoreData[0].folder_id === usrRootFolderId ||

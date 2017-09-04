@@ -171,6 +171,13 @@ router.post('/trash/empty',
   }
 )
 
+router.post('/trash/revert',
+  async ctx => {
+    await Model.Folder.updateMany({owner: usrId, deleted: {$ne: 0}}, {deleted: 0})
+    ctx.body = await Model.Note.updateMany({owner: usrId, deleted: {$ne: 0}}, {deleted: 0})
+  }
+)
+
 router.delete('/trash/:id',
   async ctx => {
     // check trash type: note or folder
@@ -229,7 +236,7 @@ router.post('/trash/:id/restore',
       // update delete flag to 0 for notes under this folder + sub folders
       await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 0})
 
-      ctx.body = {_id: ctx.params.id}
+      ctx.body = {_id: ctx.params.id, type: 'folder'}
     } else {
       ctx.body = await Model.Note.findByIdAndUpdate(ctx.params.id, {deleted: 0})
     }

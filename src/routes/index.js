@@ -214,18 +214,32 @@ router.post('/trash/:id/restore',
     }
 
     if (isFolder) {
-      // get id & parent id list of this folder + sub folders
+      // get id list of this folder + sub folders
       const folderList = await Model.Folder.find(
         {owner: usrId, $or: [{ancestor_ids: ctx.params.id, deleted: 2}, {_id: ctx.params.id, deleted: 1}]}
       ).select('_id parent_id')
-      let folderIds = []
-      let parentFolderIds = []
+      let folderMap = new Map()
       for (let folder of folderList) {
-        folderIds.push(folder._id)
-        parentFolderIds.push(folder.parent_id)
+        if (folderMap.has(folder.parent_id)) {
+          folderMap.get(folder.parent_id).push(folder._id)
+        } else {
+          folderMap.set(folder.parent_id, [folder._id])
+        }
       }
 
+      // exclude the folder whose parent is still in trash
+      let parentFolderIds = Array.from(folderMap.keys())
+      const excludeParentFolderList = await Model.Folder.find(
+        {owner: usrId, _id: {$in: parentFolderIds}, deleted: 1}
+      ).select('_id')
+      for (let excludeFolder of excludeParentFolderList) {
+        if (folderMap.has(excludeFolder._id)) folderMap.delete(excludeFolder._id)
+      }
+      parentFolderIds = Array.from(folderMap.keys())
+
       // update delete flag to 0 for this folder + sub folders
+      let folderIds = Array.from(folderMap.values())
+      folderIds = folderIds.reduce((a, b) => a.concat(b), [])
       await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 0})
 
       // if the folder's parent has been deleted, move it to root folder
@@ -234,7 +248,7 @@ router.post('/trash/:id/restore',
         if (parentFolderIds[i] !== usrRootFolderId &&
           await Model.Folder.count({owner: usrId, _id: parentFolderIds[i], deleted: 0}) <= 0) {
           let updateJson = {parent_id: usrRootFolderId, ancestor_ids: [usrRootFolderId]}
-          await Model.Folder.findByIdAndUpdate(folderIds[i], updateJson)
+          await Model.Folder.updateMany({parent_id: parentFolderIds[i]}, updateJson)
           if (!toRootFolderFlag) toRootFolderFlag = true
         }
       }

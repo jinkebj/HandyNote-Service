@@ -77,6 +77,11 @@ router.get('/folders',
     let queryJson = ctx.request.query || {}
     queryJson.owner = usrId
     queryJson.deleted = 0
+    if (queryJson.exclude_id !== undefined) {
+      queryJson.ancestor_ids = {$ne: queryJson.exclude_id}
+      queryJson._id = {$ne: queryJson.exclude_id}
+      delete queryJson.exclude_id
+    }
     ctx.body = await Model.Folder.find(queryJson).sort('name')
   }
 )
@@ -116,6 +121,15 @@ router.post('/folders/:id',
 
     delete folderJson.owner
     delete folderJson.deleted
+    if (folderJson.parent_id !== undefined) {
+      delete folderJson.ancestor_ids
+      if (folderJson.parent_id === usrRootFolderId) {
+        folderJson.ancestor_ids = [usrRootFolderId]
+      } else {
+        folderJson.ancestor_ids = (await Model.Folder.findById(folderJson.parent_id).select('ancestor_ids')).ancestor_ids
+        folderJson.ancestor_ids.push(folderJson.parent_id)
+      }
+    }
     ctx.body = await Model.Folder.findOneAndUpdate({owner: usrId, _id: ctx.params.id}, folderJson)
 
     if (folderJson.name !== undefined && ctx.body.owner === usrId) {

@@ -126,24 +126,26 @@ router.post('/folders/:id',
 
 router.delete('/folders/:id',
   async ctx => {
+    if (ctx.params.id === usrRootFolderId) ctx.throw(400, 'not allowed to delete root folder')
+
     // get id list of this folder + sub folders
     const folderList = await Model.Folder.find(
-      {owner: usrId, $or: [{ancestor_ids: ctx.params.id}, {_id: ctx.params.id}], deleted: 0}
+      {owner: usrId, $or: [{ancestor_ids: ctx.params.id}, {_id: ctx.params.id}]}
     ).select('_id')
-
-    // mark delete flag to 2 for notes under this folder + sub folders
     let folderIds = []
     for (let folder of folderList) {
       folderIds.push(folder._id)
     }
-    await Model.Note.updateMany({folder_id: {$in: folderIds}, deleted: 0}, {deleted: 2})
+
+    // mark delete flag to 2 for notes under this folder + sub folders
+    await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 2})
 
     // mark delete flag to 2 for sub folders
     let i = folderIds.indexOf(ctx.params.id)
     if (i >= 0) {
       folderIds.splice(i, 1)
     }
-    await Model.Folder.updateMany({_id: {$in: folderIds}, deleted: 0}, {deleted: 2})
+    await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 2})
 
     // mark delete flag to 1 for this folder
     ctx.body = await Model.Folder.findOneAndUpdate({owner: usrId, _id: ctx.params.id}, {deleted: 1})
@@ -180,7 +182,7 @@ router.delete('/trash/:id',
     if (isFolder) {
       // get id list of sub folders
       const folderList = await Model.Folder.find(
-        {owner: usrId, ancestor_ids: ctx.params.id, deleted: 2}
+        {owner: usrId, ancestor_ids: ctx.params.id}
       ).select('_id')
 
       // delete notes under this folder + sub folders
@@ -190,10 +192,10 @@ router.delete('/trash/:id',
       }
       let allFolderIds = folderIds.slice()
       allFolderIds.push(ctx.params.id)
-      await Model.Note.deleteMany({folder_id: {$in: allFolderIds}, deleted: 2})
+      await Model.Note.deleteMany({folder_id: {$in: allFolderIds}})
 
       // delete sub folders
-      await Model.Folder.deleteMany({_id: {$in: folderIds}, deleted: 2})
+      await Model.Folder.deleteMany({_id: {$in: folderIds}})
 
       // delete this folder
       ctx.body = await Model.Folder.findByIdAndRemove(ctx.params.id)
@@ -206,71 +208,31 @@ router.delete('/trash/:id',
 router.post('/trash/:id/restore',
   async ctx => {
     // check trash type: note or folder
-    let restoreData = await Model.Folder.find({owner: usrId, _id: ctx.params.id, deleted: 1})
-    let isFolder = (restoreData.length > 0)
-    if (!isFolder) {
-      restoreData = await Model.Note.find({owner: usrId, _id: ctx.params.id, deleted: 1})
-      if (restoreData.length <= 0) ctx.throw(400, 'invalid trash id')
+    let isFolder = (await Model.Folder.count({owner: usrId, _id: ctx.params.id, deleted: 1}) > 0)
+    if (!isFolder && await Model.Note.count({owner: usrId, _id: ctx.params.id, deleted: 1}) <= 0) {
+      ctx.throw(400, 'invalid trash id')
     }
 
     if (isFolder) {
       // get id list of this folder + sub folders
       const folderList = await Model.Folder.find(
-        {owner: usrId, $or: [{ancestor_ids: ctx.params.id, deleted: 2}, {_id: ctx.params.id, deleted: 1}]}
-      ).select('_id parent_id')
-      let folderMap = new Map()
-      for (let folder of folderList) {
-        if (folderMap.has(folder.parent_id)) {
-          folderMap.get(folder.parent_id).push(folder._id)
-        } else {
-          folderMap.set(folder.parent_id, [folder._id])
-        }
-      }
-
-      // exclude the folder whose parent is still in trash
-      let parentFolderIds = Array.from(folderMap.keys())
-      const excludeParentFolderList = await Model.Folder.find(
-        {owner: usrId, _id: {$in: parentFolderIds}, deleted: 1}
+        {owner: usrId, $or: [{ancestor_ids: ctx.params.id}, {_id: ctx.params.id}]}
       ).select('_id')
-      for (let excludeFolder of excludeParentFolderList) {
-        if (folderMap.has(excludeFolder._id)) folderMap.delete(excludeFolder._id)
+      let folderIds = []
+      for (let folder of folderList) {
+        folderIds.push(folder._id)
       }
-      parentFolderIds = Array.from(folderMap.keys())
 
       // update delete flag to 0 for this folder + sub folders
-      let folderIds = Array.from(folderMap.values())
-      folderIds = folderIds.reduce((a, b) => a.concat(b), [])
       await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 0})
 
-      // if the folder's parent has been deleted, move it to root folder
-      let toRootFolderFlag = false
-      for (let i = 0; i < parentFolderIds.length; i++) {
-        if (parentFolderIds[i] !== usrRootFolderId &&
-          await Model.Folder.count({owner: usrId, _id: parentFolderIds[i], deleted: 0}) <= 0) {
-          let updateJson = {parent_id: usrRootFolderId, ancestor_ids: [usrRootFolderId]}
-          await Model.Folder.updateMany({parent_id: parentFolderIds[i]}, updateJson)
-          if (!toRootFolderFlag) toRootFolderFlag = true
-        }
-      }
-
       // update delete flag to 0 for notes under this folder + sub folders
-      await Model.Note.updateMany({folder_id: {$in: folderIds}, deleted: 2}, {deleted: 0})
-      ctx.body = {toRootFolderFlag: toRootFolderFlag}
+      await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 0})
+
+      ctx.body = {_id: ctx.params.id}
     } else {
-      if (restoreData[0].folder_id === usrRootFolderId ||
-        await Model.Folder.count({owner: usrId, _id: restoreData[0].folder_id, deleted: 0}) > 0) {
-        await Model.Note.findByIdAndUpdate(ctx.params.id, {deleted: 0})
-        ctx.body = {toRootFolderFlag: false}
-      } else {
-        let updateJson = {}
-        updateJson.deleted = 0
-        updateJson.folder_id = usrRootFolderId
-        updateJson.folder_name = usrRootFolderName
-        await Model.Note.findByIdAndUpdate(ctx.params.id, updateJson)
-        ctx.body = {toRootFolderFlag: true}
-      }
+      ctx.body = await Model.Note.findByIdAndUpdate(ctx.params.id, {deleted: 0})
     }
-    ctx.body._id = ctx.params.id
   }
 )
 

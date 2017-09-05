@@ -55,7 +55,7 @@ router.post('/notes/:id',
     const noteJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
     delete noteJson.owner
     delete noteJson.deleted
-    noteJson.digest = truncate(noteJson.text, 100)
+    if (noteJson.text !== undefined) noteJson.digest = truncate(noteJson.text, 100)
     if (noteJson.folder_id === usrRootFolderId) {
       noteJson.folder_name = usrRootFolderName
     } else if (noteJson.folder_id !== undefined) {

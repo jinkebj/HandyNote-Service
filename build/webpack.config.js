@@ -1,6 +1,7 @@
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const path = require('path')
 const nodeExternals = require('webpack-node-externals')
+const webpack = require('webpack')
 
 module.exports = {
   target: 'node',
@@ -34,6 +35,10 @@ module.exports = {
     ]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.HANDYNOTE_SERVICE_PORT': JSON.stringify(process.env.HANDYNOTE_SERVICE_PORT),
+      'process.env.HANDYNOTE_MONGO_URL': JSON.stringify(process.env.HANDYNOTE_MONGO_URL)
+    }),
     new UglifyJSPlugin()
   ]
 }

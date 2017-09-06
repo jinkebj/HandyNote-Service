@@ -35,5 +35,6 @@ app.on('error', (err, ctx) => {
 
 // start server
 app.listen(config.SERVER_PORT, () => console.log(new Date() + ' - Server started at port: ' + config.SERVER_PORT))
+   .on('connection', socket => socket.setTimeout(30000))
 
 export default app

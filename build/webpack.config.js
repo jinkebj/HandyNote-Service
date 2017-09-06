@@ -1,4 +1,4 @@
-const UglifyJSPlugin = require('uglify-es-webpack-plugin')
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const path = require('path')
 const nodeExternals = require('webpack-node-externals')
 
@@ -34,10 +34,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new UglifyJSPlugin({
-      compress: {
-        warnings: false
-      }
-    })
+    new UglifyJSPlugin()
   ]
 }

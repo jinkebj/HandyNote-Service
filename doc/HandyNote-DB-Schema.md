@@ -42,3 +42,24 @@ db.notes.createIndex({"owner": 1, "_id": 1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "name": 1})
 db.notes.createIndex({"owner": 1, "ancestor_ids": 1, "deleted": 1, "name": 1})
 ```
+
+#### 3. users
+```
+{
+    _id: "mytest", // the unique user_id
+    password: "xxxxx"
+}
+```
+
+#### 4. tokens
+```
+{
+    _id: "6d69b787-15b0-4731-be6c-a76dca76d597", // unique id
+    user_id: "mytest", // refer to users._id
+
+    // auto managed
+    created_at: ISODate("2017-07-27T09:16:41.579Z"),
+    expired_at: ISODate("2017-07-27T09:16:41.579Z")
+}
+db.tokens.createIndex({"user_id": 1})
+```

@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 import config from '../../config'
 import Note from './note'
 import Folder from './folder'
+import User from './user'
+import Token from './token'
 
 mongoose.Promise = global.Promise
 
@@ -13,4 +15,4 @@ mongoose.connect(config.MONGO_URL, { useMongoClient: true }).then(
   }
 )
 
-export default { Note, Folder }
+export default { Note, Folder, User, Token }

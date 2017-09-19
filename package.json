@@ -12,6 +12,7 @@
     "lint": "standard"
   },
   "dependencies": {
+    "date-fns": "^1.28.5",
     "kcors": "^2.2.1",
     "koa": "^2.3.0",
     "koa-body": "^2.3.0",

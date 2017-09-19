@@ -1,6 +1,7 @@
 import KoaRouter from 'koa-router'
 import KoaBody from 'koa-body'
 import uuid from 'uuid/v1'
+import addDays from 'date-fns/add_days'
 import Model from '../models'
 import {truncate} from '../util'
 
@@ -10,29 +11,42 @@ const router = new KoaRouter({
 
 // validate loggin user
 router.use(async (ctx, next) => {
-  if (ctx.url.match(/^\/tokens/)) {
+  if (ctx.url === '/api/tokens/') {
     await next()
   } else {
-    console.log(ctx.header['x-auth-token'])
     let tokenInfo = await Model.Token.findById(ctx.header['x-auth-token'])
     if (tokenInfo !== null) {
       ctx.curUsr = tokenInfo.user_id
       await next()
     } else {
       ctx.status = 401
-      ctx.body = 'Protected resource, use Authorization header to get access'
+      ctx.body = 'invalid token!'
     }
   }
 })
 
 router.post('/tokens',
   KoaBody({
-    jsonLimit: '30mb'
+    jsonLimit: '1mb'
   }),
   async ctx => {
     const reqJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
-    ctx.body = 'request token!'
-    console.log('request token:' + reqJson)
+
+    if (await Model.User.count({_id: reqJson.usr, password: reqJson.pwd}) > 0) {
+      let currentTime = new Date()
+      await Model.Token.deleteMany({user_id: reqJson.usr, expired_at: {$lt: currentTime}})
+      ctx.body = await Model.Token.create(
+        {
+          _id: uuid(),
+          user_id: reqJson.usr,
+          created_at: currentTime,
+          expired_at: addDays(currentTime, 1)
+        }
+      )
+    } else {
+      ctx.status = 401
+      ctx.body = 'invalid user name or password!'
+    }
   }
 )
 

@@ -2,6 +2,7 @@ import KoaRouter from 'koa-router'
 import KoaBody from 'koa-body'
 import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
+import differenceInHours from 'date-fns/difference_in_hours'
 import Model from '../models'
 import {truncate} from '../util'
 
@@ -34,15 +35,24 @@ router.post('/tokens',
 
     if (await Model.User.count({_id: reqJson.usr, password: reqJson.pwd}) > 0) {
       let currentTime = new Date()
+
+      // delete expired tokens
       await Model.Token.deleteMany({user_id: reqJson.usr, expired_at: {$lt: currentTime}})
-      ctx.body = await Model.Token.create(
-        {
-          _id: uuid(),
-          user_id: reqJson.usr,
-          created_at: currentTime,
-          expired_at: addDays(currentTime, 1)
-        }
-      )
+
+      // reuse the latest token if it's created within 1 hour
+      let latestToken = await Model.Token.find({user_id: reqJson.usr}).sort({created_at: -1}).limit(1)
+      if (latestToken !== null && latestToken.length > 0 && differenceInHours(latestToken[0].created_at, currentTime) < 1) {
+        ctx.body = latestToken[0]
+      } else {
+        ctx.body = await Model.Token.create(
+          {
+            _id: uuid(),
+            user_id: reqJson.usr,
+            created_at: currentTime,
+            expired_at: addDays(currentTime, 1)
+          }
+        )
+      }
     } else {
       ctx.status = 401
       ctx.body = 'invalid user name or password!'

@@ -41,7 +41,7 @@ router.post('/tokens',
 
       // reuse the latest token if it's created within 1 hour
       let latestToken = await Model.Token.find({user_id: reqJson.usr}).sort({created_at: -1}).limit(1)
-      if (latestToken !== null && latestToken.length > 0 && differenceInHours(latestToken[0].created_at, currentTime) < 1) {
+      if (latestToken !== null && latestToken.length > 0 && differenceInHours(currentTime, latestToken[0].created_at) < 1) {
         ctx.body = latestToken[0]
       } else {
         ctx.body = await Model.Token.create(

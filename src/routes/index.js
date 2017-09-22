@@ -15,7 +15,8 @@ router.use(async (ctx, next) => {
   if (ctx.url === '/api/tokens/') {
     await next()
   } else {
-    let tokenInfo = await Model.Token.findById(ctx.header['x-auth-token'])
+    let currentTime = new Date()
+    let tokenInfo = await Model.Token.findOne({_id: ctx.header['x-auth-token'], expired_at: {$gt: currentTime}})
     if (tokenInfo !== null) {
       ctx.curUsr = tokenInfo.user_id
       await next()

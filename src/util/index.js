@@ -1,7 +1,61 @@
+export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
+export const getUsrRootFolderName = () => { return 'My Folders' }
+
 export const truncate = (str, size) => {
   if (str === undefined || str.length <= size) {
     return str
   } else {
     return str.substr(0, size) + ' ...'
   }
+}
+
+export const prepareFolderData = (usrId, inputData) => {
+  let rootItem = {
+    type: 0,
+    id: getUsrRootFolderId(usrId),
+    label: getUsrRootFolderName(),
+    ancestor_ids: [],
+    children: [],
+    note_count_cur: 0, // count of notes under current folder
+    note_count_all: 0 // count of notes under current folder and all sub folders
+  }
+  if (typeof inputData !== 'object' || inputData.length === 0) return [rootItem]
+
+  let itemMap = new Map()
+  itemMap.set(rootItem.id, rootItem)
+
+  let maxLevel = 0
+  let levelMap = new Map()
+
+  inputData.forEach(item => {
+    const curLevel = item.ancestor_ids.length
+    maxLevel = Math.max(curLevel, maxLevel)
+    itemMap.set(item._id, {
+      id: item._id,
+      label: item.name,
+      ancestor_ids: item.ancestor_ids,
+      children: []
+    })
+    let levelItem = {itemId: item._id, parentId: item.parent_id}
+    if (levelMap.has(curLevel)) {
+      levelMap.get(curLevel).push(levelItem)
+    } else {
+      levelMap.set(curLevel, [levelItem])
+    }
+  })
+  // console.log(itemMap)
+  // console.log('maxLevel is: ' + maxLevel)
+  // console.log(levelMap)
+
+  for (let i = maxLevel; i > 0; i--) {
+    if (!levelMap.has(i)) continue
+    let levelItems = levelMap.get(i)
+    levelItems.forEach(item => {
+      if (itemMap.has(item.parentId) && itemMap.has(item.itemId)) {
+        itemMap.get(item.parentId).children.push(itemMap.get(item.itemId))
+      }
+    })
+  }
+
+  return [itemMap.get(rootItem.id)]
 }

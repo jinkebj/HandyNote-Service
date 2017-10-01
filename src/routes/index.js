@@ -4,7 +4,7 @@ import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
 import Model from '../models'
-import {truncate} from '../util'
+import {getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData} from '../util'
 
 const router = new KoaRouter({
   prefix: '/api'
@@ -61,10 +61,6 @@ router.post('/tokens',
   }
 )
 
-// get root folder id & name for loggin user
-const getUsrRootFolderId = (curUsr) => { return curUsr + '-Root' }
-const usrRootFolderName = 'My Folders'
-
 router.get('/notes',
   async ctx => {
     let queryJson = ctx.request.query || {}
@@ -85,7 +81,7 @@ router.post('/notes',
     noteJson.deleted = 0
     noteJson.digest = truncate(noteJson.text, 100)
     if (noteJson.folder_id === getUsrRootFolderId(ctx.curUsr)) {
-      noteJson.folder_name = usrRootFolderName
+      noteJson.folder_name = getUsrRootFolderName()
     } else {
       noteJson.folder_name = (await Model.Folder.findOne({owner: ctx.curUsr, _id: noteJson.folder_id, deleted: 0})).name
     }
@@ -109,7 +105,7 @@ router.post('/notes/:id',
     delete noteJson.deleted
     if (noteJson.text !== undefined) noteJson.digest = truncate(noteJson.text, 100)
     if (noteJson.folder_id === getUsrRootFolderId(ctx.curUsr)) {
-      noteJson.folder_name = usrRootFolderName
+      noteJson.folder_name = getUsrRootFolderName()
     } else if (noteJson.folder_id !== undefined) {
       noteJson.folder_name = (await Model.Folder.findOne({owner: ctx.curUsr, _id: noteJson.folder_id, deleted: 0})).name
     }
@@ -138,13 +134,40 @@ router.get('/folders',
   }
 )
 
+router.get('/folders/statistics',
+  async ctx => {
+    let queryJson = ctx.request.query || {}
+    queryJson.owner = ctx.curUsr
+    queryJson.deleted = 0
+
+    ctx.body = await Model.Note.aggregate([
+      {$match: queryJson},
+      {$group: {
+        _id: '$folder_id',
+        count: {$sum: 1}
+      }}
+    ])
+  }
+)
+
+router.get('/folders/tree-info',
+  async ctx => {
+    let queryJson = {}
+    queryJson.owner = ctx.curUsr
+    queryJson.deleted = 0
+
+    let folders = await Model.Folder.find(queryJson).sort('name')
+    ctx.body = prepareFolderData(ctx.curUsr, folders)
+  }
+)
+
 router.post('/folders',
   KoaBody({
     jsonLimit: '1mb'
   }),
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
-    if (folderJson.name !== undefined && folderJson.name === usrRootFolderName) {
+    if (folderJson.name !== undefined && folderJson.name === getUsrRootFolderName()) {
       ctx.throw(400, 'invalid folder name')
     }
 
@@ -167,7 +190,7 @@ router.post('/folders/:id',
   }),
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
-    if (folderJson.name !== undefined && folderJson.name === usrRootFolderName) {
+    if (folderJson.name !== undefined && folderJson.name === getUsrRootFolderName()) {
       ctx.throw(400, 'invalid folder name')
     }
 

@@ -156,8 +156,15 @@ router.get('/folders/tree-info',
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 0
 
-    let folders = await Model.Folder.find(queryJson).sort('name')
-    ctx.body = prepareFolderData(ctx.curUsr, folders)
+    let folderData = await Model.Folder.find(queryJson).sort('name')
+    let folderStatisticsData = await Model.Note.aggregate([
+      {$match: queryJson},
+      {$group: {
+        _id: '$folder_id',
+        count: {$sum: 1}
+      }}
+    ])
+    ctx.body = prepareFolderData(ctx.curUsr, folderData, folderStatisticsData)
   }
 )
 

@@ -9,7 +9,7 @@ export const truncate = (str, size) => {
   }
 }
 
-export const prepareFolderData = (usrId, inputData) => {
+export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
   let rootItem = {
     type: 0,
     id: getUsrRootFolderId(usrId),
@@ -19,7 +19,7 @@ export const prepareFolderData = (usrId, inputData) => {
     note_count_cur: 0, // count of notes under current folder
     note_count_all: 0 // count of notes under current folder and all sub folders
   }
-  if (typeof inputData !== 'object' || inputData.length === 0) return [rootItem]
+  if (typeof folderData !== 'object' || folderData.length === 0) return [rootItem]
 
   let itemMap = new Map()
   itemMap.set(rootItem.id, rootItem)
@@ -27,14 +27,16 @@ export const prepareFolderData = (usrId, inputData) => {
   let maxLevel = 0
   let levelMap = new Map()
 
-  inputData.forEach(item => {
+  folderData.forEach(item => {
     const curLevel = item.ancestor_ids.length
     maxLevel = Math.max(curLevel, maxLevel)
     itemMap.set(item._id, {
       id: item._id,
       label: item.name,
       ancestor_ids: item.ancestor_ids,
-      children: []
+      children: [],
+      note_count_cur: 0,
+      note_count_all: 0
     })
     let levelItem = {itemId: item._id, parentId: item.parent_id}
     if (levelMap.has(curLevel)) {
@@ -43,6 +45,14 @@ export const prepareFolderData = (usrId, inputData) => {
       levelMap.set(curLevel, [levelItem])
     }
   })
+
+  folderStatisticsData.forEach(item => {
+    if (itemMap.has(item._id)) {
+      itemMap.get(item._id).note_count_cur = item.count
+      itemMap.get(item._id).note_count_all = item.count
+    }
+  })
+
   // console.log(itemMap)
   // console.log('maxLevel is: ' + maxLevel)
   // console.log(levelMap)
@@ -53,6 +63,7 @@ export const prepareFolderData = (usrId, inputData) => {
     levelItems.forEach(item => {
       if (itemMap.has(item.parentId) && itemMap.has(item.itemId)) {
         itemMap.get(item.parentId).children.push(itemMap.get(item.itemId))
+        itemMap.get(item.parentId).note_count_all += itemMap.get(item.itemId).note_count_all
       }
     })
   }

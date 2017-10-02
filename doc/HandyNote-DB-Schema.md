@@ -10,6 +10,7 @@
         {"insert":"this is my first note!\n"}
     ],
     folder_id: "f9131869-895b-47f0-ba2b-e15ca964be06", // refer to folders._id
+    starred: 1, // 1: starred, otherwise: not starred
     deleted: 0, // 0: not deleted, 1: deleted, 2: deleted with parent folder
 
     // auto managed
@@ -21,6 +22,8 @@
 }
 db.notes.createIndex({"owner": 1, "_id": 1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "name": 1})
+db.notes.createIndex({"owner": 1, "deleted": 1, "updated_at": -1})
+db.notes.createIndex({"owner": 1, "deleted": 1, "starred": -1, "updated_at": -1})
 db.notes.createIndex({"folder_id": 1, "deleted": 1, "updated_at": -1})
 ```
 

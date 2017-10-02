@@ -152,9 +152,14 @@ router.get('/folders/statistics',
 
 router.get('/folders/tree-info',
   async ctx => {
-    let queryJson = {}
+    let queryJson = ctx.request.query || {}
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 0
+    if (queryJson.exclude_id !== undefined) {
+      queryJson.ancestor_ids = {$ne: queryJson.exclude_id}
+      queryJson._id = {$ne: queryJson.exclude_id}
+      delete queryJson.exclude_id
+    }
 
     let folderData = await Model.Folder.find(queryJson).sort('name')
     let folderStatisticsData = await Model.Note.aggregate([

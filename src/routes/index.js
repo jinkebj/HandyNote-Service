@@ -66,7 +66,7 @@ router.get('/notes',
     let queryJson = ctx.request.query || {}
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 0
-    ctx.body = await Model.Note.find(queryJson).select('_id name digest folder_name deleted updated_at').sort('-updated_at')
+    ctx.body = await Model.Note.find(queryJson).select('_id name digest folder_name starred deleted updated_at').sort('-updated_at')
   }
 )
 

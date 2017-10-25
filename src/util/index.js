@@ -1,3 +1,5 @@
+export const TOKEN_EXPIRE_DAYS = 30
+
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
 export const getUsrRootFolderName = () => { return 'My Folders' }
 

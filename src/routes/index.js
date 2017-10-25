@@ -4,7 +4,7 @@ import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
 import Model from '../models'
-import {getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData} from '../util'
+import {TOKEN_EXPIRE_DAYS, getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData} from '../util'
 
 const router = new KoaRouter({
   prefix: '/api'
@@ -50,7 +50,7 @@ router.post('/tokens',
             _id: uuid(),
             user_id: reqJson.usr,
             created_at: currentTime,
-            expired_at: addDays(currentTime, 1)
+            expired_at: addDays(currentTime, TOKEN_EXPIRE_DAYS)
           }
         )
       }

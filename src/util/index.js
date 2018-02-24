@@ -1,3 +1,9 @@
+import fs from 'fs'
+import path from 'path'
+import uuid from 'uuid/v1'
+import axios from 'axios'
+import config from '../../config'
+
 export const TOKEN_EXPIRE_DAYS = 30
 
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
@@ -71,4 +77,49 @@ export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
   }
 
   return [itemMap.get(rootItem.id)]
+}
+
+const saveImgData = async (imgURL) => {
+  let ret = imgURL
+  // TODO check self hosted image from imgURL
+  let imgData = await axios.get(imgURL, {
+    responseType: 'stream'
+  })
+
+  if (!imgData.headers['content-type'].match(/image/)) {
+    console.error('Invalid file type, not an image!')
+  } else if (imgData.headers['content-length'] > 10 * 1024 * 1024) { // 10mb
+    console.error('Image too big!')
+  } else {
+    let imgName = uuid() + '.jpg'
+    if (!fs.existsSync(config.STATIC_ROOT)) fs.mkdirSync(config.STATIC_ROOT)
+    imgData.data.pipe(fs.createWriteStream(path.join(config.STATIC_ROOT, imgName)))
+    console.log('Fetch remote image:' + imgURL)
+
+    // TODO save image data to mongodb
+    ret = imgName
+  }
+  return ret
+}
+
+export const handleImgCache = async (contentsJson) => {
+  let retJson = []
+  for (let i = 0; i < contentsJson.length; i++) {
+    let op = contentsJson[i]
+    if (op.insert !== undefined &&
+      typeof op.insert === 'object' &&
+      op.insert.image !== undefined &&
+      typeof op.insert.image === 'string') {
+      if (op.insert.image.startsWith('http')) {
+        retJson.push({insert: {image: await saveImgData(op.insert.image)}})
+      } else if (op.insert.image.startsWith('//')) {
+        retJson.push({insert: {image: await saveImgData('http:' + op.insert.image)}})
+      } else {
+        retJson.push(op)
+      }
+    } else {
+      retJson.push(op)
+    }
+  }
+  return retJson
 }

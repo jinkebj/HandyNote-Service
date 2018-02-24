@@ -12,11 +12,14 @@
     "lint": "standard"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "date-fns": "^1.28.5",
     "kcors": "^2.2.1",
     "koa": "^2.3.0",
     "koa-body": "^2.3.0",
+    "koa-mount": "^3.0.0",
     "koa-router": "^7.2.1",
+    "koa-static": "^4.0.2",
     "mongoose": "^4.11.1",
     "uuid": "^3.1.0"
   },

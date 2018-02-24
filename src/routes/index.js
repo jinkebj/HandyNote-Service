@@ -4,7 +4,7 @@ import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
 import Model from '../models'
-import {TOKEN_EXPIRE_DAYS, getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData} from '../util'
+import {TOKEN_EXPIRE_DAYS, getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData, handleImgCache} from '../util'
 
 const router = new KoaRouter({
   prefix: '/api'
@@ -92,6 +92,9 @@ router.post('/notes',
     } else {
       noteJson.folder_name = (await Model.Folder.findOne({owner: ctx.curUsr, _id: noteJson.folder_id, deleted: 0})).name
     }
+
+    // cache image in local server
+    if (noteJson.contents !== undefined) noteJson.contents = await handleImgCache(noteJson.contents)
     ctx.body = await Model.Note.create(noteJson)
   }
 )
@@ -116,6 +119,9 @@ router.post('/notes/:id',
     } else if (noteJson.folder_id !== undefined) {
       noteJson.folder_name = (await Model.Folder.findOne({owner: ctx.curUsr, _id: noteJson.folder_id, deleted: 0})).name
     }
+
+    // cache image in local server
+    if (noteJson.contents !== undefined) noteJson.contents = await handleImgCache(noteJson.contents)
     await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, noteJson)
     ctx.body = await Model.Note.findById(ctx.params.id)
   }

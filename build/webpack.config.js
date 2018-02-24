@@ -37,7 +37,8 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.HANDYNOTE_SERVICE_PORT': JSON.stringify(process.env.HANDYNOTE_SERVICE_PORT),
-      'process.env.HANDYNOTE_MONGO_URL': JSON.stringify(process.env.HANDYNOTE_MONGO_URL)
+      'process.env.HANDYNOTE_MONGO_URL': JSON.stringify(process.env.HANDYNOTE_MONGO_URL),
+      'process.env.HANDYNOTE_STATIC_ROOT': JSON.stringify(process.env.HANDYNOTE_STATIC_ROOT)
     }),
     new UglifyJSPlugin()
   ]

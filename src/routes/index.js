@@ -1,8 +1,13 @@
 import KoaRouter from 'koa-router'
 import KoaBody from 'koa-body'
+import send from 'koa-send'
+import fs from 'fs'
+import path from 'path'
+import mkdirp from 'mkdirp'
 import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
+import config from '../../config'
 import Model from '../models'
 import {TOKEN_EXPIRE_DAYS, getUsrRootFolderId, getUsrRootFolderName, truncate, prepareFolderData, handleImgCache} from '../util'
 
@@ -12,7 +17,7 @@ const router = new KoaRouter({
 
 // validate loggin user
 router.use(async (ctx, next) => {
-  if (ctx.url === '/api/tokens/') {
+  if (ctx.url === '/api/tokens/' || ctx.url.startsWith('/api/handynote-static/')) {
     await next()
   } else {
     let currentTime = new Date()
@@ -26,6 +31,22 @@ router.use(async (ctx, next) => {
     }
   }
 })
+
+// serving note image file
+router.get('/handynote-static/:note_id/:image_name',
+  async ctx => {
+    let imgId = ctx.params.image_name.substring(0, ctx.params.image_name.lastIndexOf('.'))
+    let imgFolder = path.join(config.STATIC_ROOT, ctx.params.note_id)
+    let imgFullPath = path.join(imgFolder, ctx.params.image_name)
+    if (!fs.existsSync(imgFullPath)) {
+      mkdirp.sync(imgFolder)
+      let imgObj = await Model.Image.findById(imgId)
+      fs.writeFileSync(imgFullPath, imgObj.data)
+      console.log('restore file: ' + imgFullPath)
+    }
+    await send(ctx, path.join(ctx.params.note_id, ctx.params.image_name), {root: config.STATIC_ROOT})
+  }
+)
 
 router.post('/tokens',
   KoaBody({

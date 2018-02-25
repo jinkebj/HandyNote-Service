@@ -1,7 +1,5 @@
 import Koa from 'koa'
 import cors from 'kcors'
-import serve from 'koa-static'
-import mount from 'koa-mount'
 import config from '../config'
 import router from './routes'
 
@@ -22,10 +20,6 @@ app.use(async (ctx, next) => {
   const ms = new Date() - start
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
-
-// serve static public file
-const staticResource = serve(config.STATIC_ROOT)
-app.use(mount('/api/handynote-static', staticResource))
 
 // CORS support
 app.use(cors())

@@ -1,4 +1,5 @@
 import fs from 'fs'
+import mkdirp from 'mkdirp'
 import path from 'path'
 import uuid from 'uuid/v1'
 import axios from 'axios'
@@ -95,10 +96,11 @@ const saveImgData = async (imgURL, noteId, owner) => {
     console.log('Fetch remote image:' + imgURL)
     let imgId = uuid()
     let imgName = imgId + '.' + imgData.headers['content-type'].substring(6)
-    let imgFullPath = path.join(config.STATIC_ROOT, imgName)
+    let imgFolder = path.join(config.STATIC_ROOT, noteId)
+    let imgFullPath = path.join(imgFolder, imgName)
 
     // save image to file system
-    if (!fs.existsSync(config.STATIC_ROOT)) fs.mkdirSync(config.STATIC_ROOT)
+    mkdirp.sync(imgFolder)
     let writeStream = fs.createWriteStream(imgFullPath)
     imgData.data.pipe(writeStream)
 

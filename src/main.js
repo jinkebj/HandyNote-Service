@@ -25,7 +25,7 @@ app.use(async (ctx, next) => {
 
 // serve static public file
 const staticResource = serve(config.STATIC_ROOT)
-app.use(mount('/api/public', staticResource))
+app.use(mount('/api/handynote-static', staticResource))
 
 // CORS support
 app.use(cors())

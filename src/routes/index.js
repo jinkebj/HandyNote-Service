@@ -94,7 +94,9 @@ router.post('/notes',
     }
 
     // cache image in local server
-    if (noteJson.contents !== undefined) noteJson.contents = await handleImgCache(noteJson.contents)
+    if (noteJson.contents !== undefined) {
+      noteJson.contents = await handleImgCache(noteJson.contents, noteJson._id, noteJson.owner)
+    }
     ctx.body = await Model.Note.create(noteJson)
   }
 )
@@ -121,7 +123,9 @@ router.post('/notes/:id',
     }
 
     // cache image in local server
-    if (noteJson.contents !== undefined) noteJson.contents = await handleImgCache(noteJson.contents)
+    if (noteJson.contents !== undefined) {
+      noteJson.contents = await handleImgCache(noteJson.contents, ctx.params.id, ctx.curUsr)
+    }
     await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, noteJson)
     ctx.body = await Model.Note.findById(ctx.params.id)
   }
@@ -282,6 +286,7 @@ router.post('/trash/empty',
   async ctx => {
     ctx.body = await Model.Note.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
     await Model.Folder.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
+    await Model.Image.deleteMany({owner: ctx.curUsr})
   }
 )
 
@@ -315,12 +320,15 @@ router.delete('/trash/:id',
       allFolderIds.push(ctx.params.id)
       await Model.Note.deleteMany({folder_id: {$in: allFolderIds}})
 
+      // TODO delete images for notes
+
       // delete sub folders
       await Model.Folder.deleteMany({_id: {$in: folderIds}})
 
       // delete this folder
       ctx.body = await Model.Folder.findByIdAndRemove(ctx.params.id)
     } else {
+      await Model.Image.deleteMany({note_id: ctx.params.id})
       ctx.body = await Model.Note.findByIdAndRemove(ctx.params.id)
     }
   }

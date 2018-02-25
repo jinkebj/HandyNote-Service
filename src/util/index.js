@@ -3,6 +3,7 @@ import path from 'path'
 import uuid from 'uuid/v1'
 import axios from 'axios'
 import config from '../../config'
+import Model from '../models'
 
 export const TOKEN_EXPIRE_DAYS = 30
 
@@ -79,7 +80,7 @@ export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
   return [itemMap.get(rootItem.id)]
 }
 
-const saveImgData = async (imgURL) => {
+const saveImgData = async (imgURL, noteId, owner) => {
   let ret = imgURL
   // TODO check self hosted image from imgURL
   let imgData = await axios.get(imgURL, {
@@ -91,18 +92,35 @@ const saveImgData = async (imgURL) => {
   } else if (imgData.headers['content-length'] > 10 * 1024 * 1024) { // 10mb
     console.error('Image too big!')
   } else {
-    let imgName = uuid() + '.jpg'
-    if (!fs.existsSync(config.STATIC_ROOT)) fs.mkdirSync(config.STATIC_ROOT)
-    imgData.data.pipe(fs.createWriteStream(path.join(config.STATIC_ROOT, imgName)))
     console.log('Fetch remote image:' + imgURL)
+    let imgId = uuid()
+    let imgName = imgId + '.' + imgData.headers['content-type'].substring(6)
+    let imgFullPath = path.join(config.STATIC_ROOT, imgName)
 
-    // TODO save image data to mongodb
+    // save image to file system
+    if (!fs.existsSync(config.STATIC_ROOT)) fs.mkdirSync(config.STATIC_ROOT)
+    let writeStream = fs.createWriteStream(imgFullPath)
+    imgData.data.pipe(writeStream)
+
+    // save image data to mongodb
+    writeStream.on('close', async () => {
+      console.log('Cache remote image to local server successfully!')
+      let imageJson = {}
+      imageJson._id = imgId
+      imageJson.note_id = noteId
+      imageJson.content_type = imgData.headers['content-type']
+      imageJson.content_length = imgData.headers['content-length']
+      imageJson.owner = owner
+      imageJson.data = fs.readFileSync(imgFullPath)
+      await Model.Image.create(imageJson)
+    })
+
     ret = imgName
   }
   return ret
 }
 
-export const handleImgCache = async (contentsJson) => {
+export const handleImgCache = async (contentsJson, noteId, owner) => {
   let retJson = []
   for (let i = 0; i < contentsJson.length; i++) {
     let op = contentsJson[i]
@@ -111,9 +129,9 @@ export const handleImgCache = async (contentsJson) => {
       op.insert.image !== undefined &&
       typeof op.insert.image === 'string') {
       if (op.insert.image.startsWith('http')) {
-        retJson.push({insert: {image: await saveImgData(op.insert.image)}})
+        retJson.push({insert: {image: await saveImgData(op.insert.image, noteId, owner)}})
       } else if (op.insert.image.startsWith('//')) {
-        retJson.push({insert: {image: await saveImgData('http:' + op.insert.image)}})
+        retJson.push({insert: {image: await saveImgData('http:' + op.insert.image, noteId, owner)}})
       } else {
         retJson.push(op)
       }

@@ -81,7 +81,7 @@ export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
   return [itemMap.get(rootItem.id)]
 }
 
-const saveImgData = async (imgURL, noteId, owner) => {
+const saveImgFromURL = async (imgURL, noteId, owner) => {
   let ret = imgURL
   // TODO check self hosted image from imgURL
   let imgData = await axios.get(imgURL, {
@@ -122,6 +122,49 @@ const saveImgData = async (imgURL, noteId, owner) => {
   return ret
 }
 
+const saveImgFromData = async (imgData, noteId, owner) => {
+  let ret = imgData
+
+  if (imgData.length > 10 * 1024) { // 10kb
+    console.log('Start save image data to local server!')
+
+    // imgData format is: data:image/jpeg;base64,{base64Data}
+    let base64DataStartIndex = imgData.indexOf(',') + 1
+    let base64Data = imgData.substring(base64DataStartIndex)
+
+    let imgTypeStartIndex = imgData.indexOf('/') + 1
+    let imgTypeEndIndex = imgData.indexOf(';')
+    let imgType = imgData.substring(imgTypeStartIndex, imgTypeEndIndex)
+
+    let imgId = uuid()
+    let imgName = imgId + '.' + imgType
+    let imgFolder = path.join(config.STATIC_ROOT, noteId)
+    let imgFullPath = path.join(imgFolder, imgName)
+
+    // save image to file system
+    mkdirp.sync(imgFolder)
+    fs.writeFile(imgFullPath, base64Data, 'base64', async (err) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log('Save image data to local server successfully!')
+
+        // save image data to mongodb
+        let imageJson = {}
+        imageJson._id = imgId
+        imageJson.note_id = noteId
+        imageJson.content_type = 'image/' + imgType
+        imageJson.content_length = base64Data.length
+        imageJson.owner = owner
+        imageJson.data = fs.readFileSync(imgFullPath)
+        await Model.Image.create(imageJson)
+        ret = imgName
+      }
+    })
+  }
+  return ret
+}
+
 export const handleImgCache = async (contentsJson, noteId, owner) => {
   let retJson = []
   for (let i = 0; i < contentsJson.length; i++) {
@@ -131,9 +174,11 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
       op.insert.image !== undefined &&
       typeof op.insert.image === 'string') {
       if (op.insert.image.startsWith('http')) {
-        retJson.push({insert: {image: await saveImgData(op.insert.image, noteId, owner)}})
+        retJson.push({insert: {image: await saveImgFromURL(op.insert.image, noteId, owner)}})
       } else if (op.insert.image.startsWith('//')) {
-        retJson.push({insert: {image: await saveImgData('http:' + op.insert.image, noteId, owner)}})
+        retJson.push({insert: {image: await saveImgFromURL('http:' + op.insert.image, noteId, owner)}})
+      } else if (op.insert.image.startsWith('data:image')) {
+        retJson.push({insert: {image: await saveImgFromData(op.insert.image, noteId, owner)}})
       } else {
         retJson.push(op)
       }

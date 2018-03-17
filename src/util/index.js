@@ -106,7 +106,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
 
     // save image data to mongodb
     writeStream.on('close', async () => {
-      console.log('Cache remote image to local server successfully!')
+      console.log('Cache remote image to local server as ' + imgName + ' successfully!')
       let imageJson = {}
       imageJson._id = imgId
       imageJson.note_id = noteId
@@ -126,8 +126,6 @@ const saveImgFromData = async (imgData, noteId, owner) => {
   let ret = imgData
 
   if (imgData.length > 10 * 1024) { // 10kb
-    console.log('Start save image data to local server!')
-
     // imgData format is: data:image/jpeg;base64,{base64Data}
     let base64DataStartIndex = imgData.indexOf(',') + 1
     let base64Data = imgData.substring(base64DataStartIndex)
@@ -143,11 +141,11 @@ const saveImgFromData = async (imgData, noteId, owner) => {
 
     // save image to file system
     mkdirp.sync(imgFolder)
-    fs.writeFile(imgFullPath, base64Data, 'base64', async (err) => {
+    await fs.writeFile(imgFullPath, base64Data, 'base64', async (err) => {
       if (err) {
         console.log(err)
       } else {
-        console.log('Save image data to local server successfully!')
+        console.log('Save image data to local server as ' + imgName + ' successfully!')
 
         // save image data to mongodb
         let imageJson = {}
@@ -158,9 +156,9 @@ const saveImgFromData = async (imgData, noteId, owner) => {
         imageJson.owner = owner
         imageJson.data = fs.readFileSync(imgFullPath)
         await Model.Image.create(imageJson)
-        ret = imgName
       }
     })
+    ret = imgName
   }
   return ret
 }

@@ -306,7 +306,7 @@ router.post('/trash/empty',
   async ctx => {
     ctx.body = await Model.Note.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
     await Model.Folder.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
-    await Model.Image.deleteMany({owner: ctx.curUsr})
+    // TODO delete images for notes
   }
 )
 

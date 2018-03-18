@@ -10,6 +10,10 @@ export const TOKEN_EXPIRE_DAYS = 30
 
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
 export const getUsrRootFolderName = () => { return 'My Folders' }
+export const getStaticRoot = () => {
+  let ret = process.env.HANDYNOTE_STATIC_ROOT || config.STATIC_ROOT
+  return ret
+}
 
 export const truncate = (str, size) => {
   if (str === undefined || str.length <= size) {
@@ -96,7 +100,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
     console.log('Fetch remote image:' + imgURL)
     let imgId = uuid()
     let imgName = imgId + '.' + imgData.headers['content-type'].substring(6)
-    let imgFolder = path.join(config.STATIC_ROOT, noteId)
+    let imgFolder = path.join(getStaticRoot(), noteId)
     let imgFullPath = path.join(imgFolder, imgName)
 
     // save image to file system
@@ -136,7 +140,7 @@ const saveImgFromData = async (imgData, noteId, owner) => {
 
     let imgId = uuid()
     let imgName = imgId + '.' + imgType
-    let imgFolder = path.join(config.STATIC_ROOT, noteId)
+    let imgFolder = path.join(getStaticRoot(), noteId)
     let imgFullPath = path.join(imgFolder, imgName)
 
     // save image to file system

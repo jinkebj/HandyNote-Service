@@ -374,6 +374,7 @@ router.delete('/trash/:id',
       ctx.body = await Model.Folder.findByIdAndRemove(ctx.params.id)
     } else {
       await Model.Image.deleteMany({note_id: ctx.params.id})
+      fse.removeSync(path.join(getStaticRoot(), ctx.params.id))
       ctx.body = await Model.Note.findByIdAndRemove(ctx.params.id)
     }
   }

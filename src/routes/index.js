@@ -42,7 +42,8 @@ router.get('/handynote-static/:note_id/:image_name',
       fse.writeFileSync(imgFullPath, imgObj.data)
       console.log('restore file: ' + imgFullPath)
     }
-    await send(ctx, path.join(ctx.params.note_id, ctx.params.image_name), {root: getStaticRoot()})
+    await send(ctx, path.join(ctx.params.note_id, ctx.params.image_name),
+      {root: getStaticRoot(), maxage: 30 * 24 * 60 * 60 * 1000})
   }
 )
 

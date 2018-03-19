@@ -12,7 +12,10 @@ npm config set registry https://registry.npm.taobao.org
 npm install
 
 # Optional, set HANDYNOTE_SERVICE_PORT, HANDYNOTE_MONGO_URL & HANDYNOTE_STATIC_ROOT
-# if not set, will use HANDYNOTE_SERVICE_PORT=3000, HANDYNOTE_MONGO_URL=mongodb://localhost/HandyNote, HANDYNOTE_STATIC_ROOT=./handynote-static
+# if not set, will use:
+#     HANDYNOTE_SERVICE_PORT=3000
+#     HANDYNOTE_MONGO_URL=mongodb://localhost/HandyNote
+#     HANDYNOTE_STATIC_ROOT=./handynote-static
 export HANDYNOTE_SERVICE_PORT={portnum}
 export HANDYNOTE_MONGO_URL=mongodb://{usr}:{pwd}@{ip}/HandyNote
 export HANDYNOTE_STATIC_ROOT=/home/xxx/xxx
@@ -21,9 +24,6 @@ export HANDYNOTE_STATIC_ROOT=/home/xxx/xxx
 npm run dev
 
 # build minimized release for production env
-# Note:
-#     on build env - HANDYNOTE_STATIC_ROOT will be used for build static files
-#     on running env - you export different HANDYNOTE_STATIC_ROOT to overwrite value in static files
 npm run build
 
 # build and run in production mode

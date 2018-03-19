@@ -1,9 +1,8 @@
 import KoaRouter from 'koa-router'
 import KoaBody from 'koa-body'
 import send from 'koa-send'
-import fs from 'fs'
+import fse from 'fs-extra'
 import path from 'path'
-import mkdirp from 'mkdirp'
 import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
@@ -37,10 +36,10 @@ router.get('/handynote-static/:note_id/:image_name',
     let imgId = ctx.params.image_name.substring(0, ctx.params.image_name.lastIndexOf('.'))
     let imgFolder = path.join(getStaticRoot(), ctx.params.note_id)
     let imgFullPath = path.join(imgFolder, ctx.params.image_name)
-    if (!fs.existsSync(imgFullPath)) {
-      mkdirp.sync(imgFolder)
+    if (!fse.existsSync(imgFullPath)) {
+      fse.ensureDirSync(imgFolder)
       let imgObj = await Model.Image.findById(imgId)
-      fs.writeFileSync(imgFullPath, imgObj.data)
+      fse.writeFileSync(imgFullPath, imgObj.data)
       console.log('restore file: ' + imgFullPath)
     }
     await send(ctx, path.join(ctx.params.note_id, ctx.params.image_name), {root: getStaticRoot()})
@@ -304,9 +303,22 @@ router.get('/trash',
 
 router.post('/trash/empty',
   async ctx => {
+    // get id list of note to be deleted
+    let deletedNoteItems = await Model.Note.find({owner: ctx.curUsr, deleted: {$ne: 0}}).select('_id')
+
+    // delete note & folder with delete flag
     ctx.body = await Model.Note.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
     await Model.Folder.deleteMany({owner: ctx.curUsr, deleted: {$ne: 0}})
-    // TODO delete images for notes
+
+    // delete image DB data related with deleted notes
+    for (let deletedNoteItem of deletedNoteItems) {
+      await Model.Image.deleteMany({note_id: deletedNoteItem._id})
+    }
+
+    // delete image files related with deleted notes
+    for (let deletedNoteItem of deletedNoteItems) {
+      fse.removeSync(path.join(getStaticRoot(), deletedNoteItem._id))
+    }
   }
 )
 
@@ -331,16 +343,29 @@ router.delete('/trash/:id',
         {owner: ctx.curUsr, ancestor_ids: ctx.params.id}
       ).select('_id')
 
-      // delete notes under this folder + sub folders
+      // get id list for this folder + sub folders
       let folderIds = []
       for (let folder of folderList) {
         folderIds.push(folder._id)
       }
       let allFolderIds = folderIds.slice()
       allFolderIds.push(ctx.params.id)
+
+      // get id list of note to be deleted
+      let deletedNoteItems = await Model.Note.find({folder_id: {$in: allFolderIds}}).select('_id')
+
+      // delete notes under this folder + sub folders
       await Model.Note.deleteMany({folder_id: {$in: allFolderIds}})
 
-      // TODO delete images for notes
+      // delete image DB data related with deleted notes
+      for (let deletedNoteItem of deletedNoteItems) {
+        await Model.Image.deleteMany({note_id: deletedNoteItem._id})
+      }
+
+      // delete image files related with deleted notes
+      for (let deletedNoteItem of deletedNoteItems) {
+        fse.removeSync(path.join(getStaticRoot(), deletedNoteItem._id))
+      }
 
       // delete sub folders
       await Model.Folder.deleteMany({_id: {$in: folderIds}})

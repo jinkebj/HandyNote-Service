@@ -121,7 +121,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
       await Model.Image.create(imageJson)
     })
 
-    ret = imgName
+    ret = imgId
   }
   return ret
 }
@@ -162,7 +162,7 @@ const saveImgFromData = async (imgData, noteId, owner) => {
         await Model.Image.create(imageJson)
       }
     })
-    ret = imgName
+    ret = imgId
   }
   return ret
 }

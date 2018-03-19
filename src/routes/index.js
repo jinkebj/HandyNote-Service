@@ -15,7 +15,7 @@ const router = new KoaRouter({
 
 // validate loggin user
 router.use(async (ctx, next) => {
-  if (ctx.url === '/api/tokens/' || ctx.url.startsWith('/api/handynote-static/')) {
+  if (ctx.url === '/api/tokens/' || ctx.url.startsWith('/api/images/')) {
     await next()
   } else {
     let currentTime = new Date()
@@ -30,19 +30,34 @@ router.use(async (ctx, next) => {
   }
 })
 
-// serving note image file
-router.get('/handynote-static/:note_id/:image_name',
+// serve static image file, utilize certId for permission check
+router.get('/images/:id',
   async ctx => {
-    let imgId = ctx.params.image_name.substring(0, ctx.params.image_name.lastIndexOf('.'))
-    let imgFolder = path.join(getStaticRoot(), ctx.params.note_id)
-    let imgFullPath = path.join(imgFolder, ctx.params.image_name)
+    let curUsr
+    console.log(ctx.query.certId)
+    // permission check by certId
+    let tokenInfo = await Model.Token.findOne({_id: ctx.query.certId, expired_at: {$gt: new Date()}})
+    if (tokenInfo !== null) {
+      curUsr = tokenInfo.user_id
+    } else {
+      ctx.throw(401, 'invalid certId')
+    }
+
+    // owner check
+    let imgItem = await Model.Image.findOne({owner: curUsr, _id: ctx.params.id})
+    if (imgItem === null) {
+      ctx.throw(400, 'invalid image id')
+    }
+
+    let imgName = ctx.params.id + imgItem.content_type.substring(6)
+    let imgFolder = path.join(getStaticRoot(), imgItem.note_id)
+    let imgFullPath = path.join(imgFolder, imgName)
     if (!fse.existsSync(imgFullPath)) {
       fse.ensureDirSync(imgFolder)
-      let imgObj = await Model.Image.findById(imgId)
-      fse.writeFileSync(imgFullPath, imgObj.data)
+      fse.writeFileSync(imgFullPath, imgItem.data)
       console.log('restore file: ' + imgFullPath)
     }
-    await send(ctx, path.join(ctx.params.note_id, ctx.params.image_name),
+    await send(ctx, path.join(imgItem.note_id, imgName),
       {root: getStaticRoot(), maxage: 30 * 24 * 60 * 60 * 1000})
   }
 )

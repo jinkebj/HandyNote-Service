@@ -34,6 +34,7 @@ db.notes.createIndex({"folder_id": 1, "deleted": 1, "updated_at": -1})
     note_id: "f9131869-895b-47f0-ba2b-e15ca8a5be06", // refer to notes._id
     content_type: "image/jpeg", // image/jpeg, image/png, image/gif
     content_length: 24008, // bits
+    source: "http://xxx.xxx.xxx/xxx.jpg", // optional, source url of image
     data: "xxx", // BinData
 
     // auto managed

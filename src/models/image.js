@@ -7,6 +7,7 @@ const ImageSchema = new mongoose.Schema(
     note_id: { type: String, required: true },
     content_type: { type: String, required: true },
     content_length: { type: String, default: 0 },
+    source: { type: String },
     data: { type: Buffer, required: true }
   },
   {

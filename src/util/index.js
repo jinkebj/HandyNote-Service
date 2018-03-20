@@ -7,6 +7,7 @@ import config from '../../config'
 import Model from '../models'
 
 export const TOKEN_EXPIRE_DAYS = 30
+export const HANDYNOTE_PROTOCOL = 'handynote://'
 
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
 export const getUsrRootFolderName = () => { return 'My Folders' }
@@ -116,6 +117,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
       imageJson.note_id = noteId
       imageJson.content_type = imgData.headers['content-type']
       imageJson.content_length = imgData.headers['content-length']
+      imageJson.source = imgURL
       imageJson.owner = owner
       imageJson.data = fs.readFileSync(imgFullPath)
       await Model.Image.create(imageJson)
@@ -157,6 +159,7 @@ const saveImgFromData = async (imgData, noteId, owner) => {
         imageJson.note_id = noteId
         imageJson.content_type = 'image/' + imgType
         imageJson.content_length = base64Data.length
+        imageJson.source = 'base64Data'
         imageJson.owner = owner
         imageJson.data = fs.readFileSync(imgFullPath)
         await Model.Image.create(imageJson)
@@ -176,11 +179,11 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
       op.insert.image !== undefined &&
       typeof op.insert.image === 'string') {
       if (op.insert.image.startsWith('http')) {
-        retJson.push({insert: {image: await saveImgFromURL(op.insert.image, noteId, owner)}})
+        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromURL(op.insert.image, noteId, owner)}})
       } else if (op.insert.image.startsWith('//')) {
-        retJson.push({insert: {image: await saveImgFromURL('http:' + op.insert.image, noteId, owner)}})
+        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromURL('http:' + op.insert.image, noteId, owner)}})
       } else if (op.insert.image.startsWith('data:image')) {
-        retJson.push({insert: {image: await saveImgFromData(op.insert.image, noteId, owner)}})
+        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromData(op.insert.image, noteId, owner)}})
       } else {
         retJson.push(op)
       }

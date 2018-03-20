@@ -49,7 +49,7 @@ router.get('/images/:id',
       ctx.throw(400, 'invalid image id')
     }
 
-    let imgName = ctx.params.id + imgItem.content_type.substring(6)
+    let imgName = ctx.params.id + '.' + imgItem.content_type.substring(6)
     let imgFolder = path.join(getStaticRoot(), imgItem.note_id)
     let imgFullPath = path.join(imgFolder, imgName)
     if (!fse.existsSync(imgFullPath)) {

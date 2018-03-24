@@ -100,7 +100,9 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
   } else {
     console.log('Fetch remote image:' + imgURL)
     let imgId = uuid()
-    let imgName = imgId + '.' + imgData.headers['content-type'].substring(6)
+    let imgExt = imgData.headers['content-type'].substring(6)
+    imgExt = imgExt.replace('svg+xml', 'svg')
+    let imgName = imgId + '.' + imgExt
     let imgFolder = path.join(getStaticRoot(), noteId)
     let imgFullPath = path.join(imgFolder, imgName)
 
@@ -115,7 +117,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
       let imageJson = {}
       imageJson._id = imgId
       imageJson.note_id = noteId
-      imageJson.content_type = imgData.headers['content-type']
+      imageJson.content_type = imgData.headers['content-type'].replace('svg+xml', 'svg')
       imageJson.content_length = imgData.headers['content-length']
       imageJson.source = imgURL
       imageJson.owner = owner
@@ -172,6 +174,7 @@ const saveImgFromData = async (imgData, noteId, owner) => {
 
 export const handleImgCache = async (contentsJson, noteId, owner) => {
   let retJson = []
+  let imgIds = []
   for (let i = 0; i < contentsJson.length; i++) {
     let op = contentsJson[i]
     if (op.insert !== undefined &&
@@ -179,11 +182,24 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
       op.insert.image !== undefined &&
       typeof op.insert.image === 'string') {
       if (op.insert.image.startsWith('http')) {
-        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromURL(op.insert.image, noteId, owner)}})
+        let imgId = await saveImgFromURL(op.insert.image, noteId, owner)
+        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + imgId}})
+        imgIds.push(imgId)
       } else if (op.insert.image.startsWith('//')) {
-        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromURL('http:' + op.insert.image, noteId, owner)}})
+        let imgId = await saveImgFromURL('http:' + op.insert.image, noteId, owner)
+        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + imgId}})
+        imgIds.push(imgId)
       } else if (op.insert.image.startsWith('data:image')) {
-        retJson.push({insert: {image: HANDYNOTE_PROTOCOL + await saveImgFromData(op.insert.image, noteId, owner)}})
+        let imgRet = await saveImgFromData(op.insert.image, noteId, owner)
+        if (imgRet.startsWith('data:image')) {
+          retJson.push({insert: {image: imgRet}})
+        } else {
+          retJson.push({insert: {image: HANDYNOTE_PROTOCOL + imgRet}})
+          imgIds.push(imgRet)
+        }
+      } else if (op.insert.image.startsWith(HANDYNOTE_PROTOCOL)) {
+        retJson.push(op)
+        imgIds.push(op.insert.image.replace(HANDYNOTE_PROTOCOL, ''))
       } else {
         retJson.push(op)
       }
@@ -191,5 +207,8 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
       retJson.push(op)
     }
   }
+
+  // handle deleted image
+  await Model.Image.deleteMany({_id: {$nin: imgIds}, note_id: noteId})
   return retJson
 }

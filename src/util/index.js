@@ -88,7 +88,6 @@ export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
 
 const saveImgFromURL = async (imgURL, noteId, owner) => {
   let ret = imgURL
-  // TODO check self hosted image from imgURL
   let imgData = await axios.get(imgURL, {
     responseType: 'stream'
   })

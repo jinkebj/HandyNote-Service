@@ -278,6 +278,7 @@ router.post('/folders/:id',
     delete folderJson.deleted
     delete folderJson.ancestor_ids
 
+    // update data for current folder
     if (folderJson.parent_id !== undefined) {
       if (folderJson.parent_id === getUsrRootFolderId(ctx.curUsr)) {
         folderJson.ancestor_ids = [getUsrRootFolderId(ctx.curUsr)]
@@ -290,11 +291,16 @@ router.post('/folders/:id',
         folderJson.ancestor_ids.push(folderJson.parent_id)
       }
     }
-    ctx.body = await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, folderJson)
+    await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, folderJson)
 
+    // TODO update ancestor_ids for all sub folders
+
+    // update folder_name for all notes under this folder
     if (folderJson.name !== undefined && ctx.body.owner === ctx.curUsr) {
       await Model.Note.updateMany({folder_id: ctx.params.id}, {folder_name: folderJson.name})
     }
+
+    ctx.body = await Model.Folder.findById(ctx.params.id)
   }
 )
 

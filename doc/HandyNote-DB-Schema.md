@@ -52,11 +52,11 @@ db.images.createIndex({"note_id": 1, "updated_at": -1})
     _id: "5e5bb960-19d8-11e8-8f7a-ebb2fe3cd6a6", // unique id or owner + "-Root"
     name: "myFolder",
     parent_id: "8iok1869-895b-47f0-ba2b-e15ca8a5be06", // parent folder id
-    ancestor_ids: ["xxx@xxx.xx-Root", "8iok1869-895b-47f0-ba2b-e15ca8a5be06"], // array of all ancestors' id
     deleted: 0, // 0: not deleted, 1: deleted, 2: deleted with parent folder
 
     // auto managed
     owner: "xxx@xxx.xx", // refer to user_id
+    ancestor_ids: ["xxx@xxx.xx-Root", "8iok1869-895b-47f0-ba2b-e15ca8a5be06"], // array of all ancestors' id
     created_at: ISODate("2017-07-27T09:16:41.579Z"),
     updated_at: ISODate("2017-07-28T09:16:41.579Z")
 }

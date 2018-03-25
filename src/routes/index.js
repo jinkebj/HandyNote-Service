@@ -238,6 +238,19 @@ router.post('/folders',
     folderJson._id = uuid()
     folderJson.owner = ctx.curUsr
     folderJson.deleted = 0
+
+    delete folderJson.ancestor_ids
+    if (folderJson.parent_id === getUsrRootFolderId(ctx.curUsr)) {
+      folderJson.ancestor_ids = [getUsrRootFolderId(ctx.curUsr)]
+    } else {
+      let ancestorIds = await Model.Folder.findById(folderJson.parent_id).select('ancestor_ids')
+      if (ancestorIds === undefined || ancestorIds === null) {
+        ctx.throw(400, 'invalid parent folder')
+      }
+      folderJson.ancestor_ids = ancestorIds.ancestor_ids
+      folderJson.ancestor_ids.push(folderJson.parent_id)
+    }
+
     ctx.body = await Model.Folder.create(folderJson)
   }
 )
@@ -257,15 +270,23 @@ router.post('/folders/:id',
     if (folderJson.name !== undefined && folderJson.name === getUsrRootFolderName()) {
       ctx.throw(400, 'invalid folder name')
     }
+    if (folderJson.parent_id !== undefined && folderJson.parent_id === ctx.params.id) {
+      ctx.throw(400, 'invalid parent folder')
+    }
 
     delete folderJson.owner
     delete folderJson.deleted
+    delete folderJson.ancestor_ids
+
     if (folderJson.parent_id !== undefined) {
-      delete folderJson.ancestor_ids
       if (folderJson.parent_id === getUsrRootFolderId(ctx.curUsr)) {
         folderJson.ancestor_ids = [getUsrRootFolderId(ctx.curUsr)]
       } else {
-        folderJson.ancestor_ids = (await Model.Folder.findById(folderJson.parent_id).select('ancestor_ids')).ancestor_ids
+        let ancestorIds = await Model.Folder.findById(folderJson.parent_id).select('ancestor_ids')
+        if (ancestorIds === undefined || ancestorIds === null) {
+          ctx.throw(400, 'invalid ancestor info for parent folder')
+        }
+        folderJson.ancestor_ids = ancestorIds.ancestor_ids
         folderJson.ancestor_ids.push(folderJson.parent_id)
       }
     }

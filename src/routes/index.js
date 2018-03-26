@@ -231,7 +231,8 @@ router.post('/folders',
   }),
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
-    if (folderJson.name !== undefined && folderJson.name === getUsrRootFolderName()) {
+    if (folderJson.name !== undefined &&
+      (folderJson.name === getUsrRootFolderName() || folderJson.name.indexOf(',') >= 0)) {
       ctx.throw(400, 'invalid folder name')
     }
 
@@ -267,7 +268,8 @@ router.post('/folders/:id',
   }),
   async ctx => {
     const folderJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
-    if (folderJson.name !== undefined && folderJson.name === getUsrRootFolderName()) {
+    if (folderJson.name !== undefined &&
+      (folderJson.name === getUsrRootFolderName() || folderJson.name.indexOf(',') >= 0)) {
       ctx.throw(400, 'invalid folder name')
     }
     if (folderJson.parent_id !== undefined && folderJson.parent_id === ctx.params.id) {
@@ -291,12 +293,26 @@ router.post('/folders/:id',
         folderJson.ancestor_ids.push(folderJson.parent_id)
       }
     }
-    await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, folderJson)
+    let oldFolder = await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, folderJson, {new: false})
 
-    // TODO update ancestor_ids for all sub folders
+    // update ancestor_ids for all sub folders
+    if (folderJson.parent_id !== undefined) {
+      oldFolder.ancestor_ids.push(ctx.params.id)
+      folderJson.ancestor_ids.push(ctx.params.id)
+      let oldFolderAncestor = oldFolder.ancestor_ids.toString()
+      let newFolderAncestor = folderJson.ancestor_ids.toString()
+      console.log('update ancestor_ids for sub folders: oldFolderAncestor:' +
+        oldFolderAncestor + ', newFolderAncestor:' + newFolderAncestor)
+      let subFolderItems = await Model.Folder.find({ancestor_ids: ctx.params.id}).select('_id ancestor_ids')
+      for (let subFolderItem of subFolderItems) {
+        let ancestorIdsStr = subFolderItem.ancestor_ids.toString()
+        ancestorIdsStr = ancestorIdsStr.replace(oldFolderAncestor, newFolderAncestor)
+        await Model.Folder.findByIdAndUpdate(subFolderItem._id, {ancestor_ids: ancestorIdsStr.split(',')}, {upsert: false})
+      }
+    }
 
     // update folder_name for all notes under this folder
-    if (folderJson.name !== undefined && ctx.body.owner === ctx.curUsr) {
+    if (folderJson.name !== undefined) {
       await Model.Note.updateMany({folder_id: ctx.params.id}, {folder_name: folderJson.name})
     }
 

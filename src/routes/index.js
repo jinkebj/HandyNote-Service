@@ -288,6 +288,8 @@ router.post('/folders/:id',
         let ancestorIds = await Model.Folder.findById(folderJson.parent_id).select('ancestor_ids')
         if (ancestorIds === undefined || ancestorIds === null) {
           ctx.throw(400, 'invalid ancestor info for parent folder')
+        } else if (ancestorIds.toString().indexOf(ctx.params.id) >= 0) {
+          ctx.throw(400, 'can NOT move folder to subfolder of itself')
         }
         folderJson.ancestor_ids = ancestorIds.ancestor_ids
         folderJson.ancestor_ids.push(folderJson.parent_id)

@@ -15,7 +15,7 @@ const router = new KoaRouter({
 
 // validate loggin user
 router.use(async (ctx, next) => {
-  if (ctx.url === '/api/tokens/' || ctx.url.startsWith('/api/images/')) {
+  if (ctx.url === '/api/tokens/' || (ctx.url.startsWith('/api/images/') && ctx.method.toUpperCase() === 'GET')) {
     await next()
   } else {
     let currentTime = new Date()
@@ -59,6 +59,50 @@ router.get('/images/:id',
     }
     await send(ctx, path.join(imgItem.note_id, imgName),
       {root: getStaticRoot(), maxage: 30 * 24 * 60 * 60 * 1000})
+  }
+)
+
+router.post('/images/:id',
+  KoaBody({
+    jsonLimit: '120mb'
+  }),
+  async ctx => {
+    const imgJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
+
+    // image data <= 1 kb is not allowed for update
+    if (imgJson.data === undefined || imgJson.data.length <= 1024) {
+      ctx.throw(400, 'invalid image data')
+    }
+
+    // owner check
+    let imgItem = await Model.Image.findOne({owner: ctx.curUsr, _id: ctx.params.id})
+    if (imgItem === null) {
+      ctx.throw(400, 'invalid image id')
+    }
+
+    // imgJson.data format is: data:image/jpeg;base64,{base64Data}
+    let base64DataStartIndex = imgJson.data.indexOf(',') + 1
+    let base64Data = imgJson.data.substring(base64DataStartIndex)
+
+    let imgTypeStartIndex = imgJson.data.indexOf('/') + 1
+    let imgTypeEndIndex = imgJson.data.indexOf(';')
+    let imgType = imgJson.data.substring(imgTypeStartIndex, imgTypeEndIndex)
+
+    let imgId = ctx.params.id
+    let imgFolder = path.join(getStaticRoot(), imgItem.note_id)
+    let imgFullPath = path.join(imgFolder, imgId + '.' + imgType)
+
+    // remove old image file
+    fse.removeSync(imgFullPath)
+
+    // update image data to mongodb
+    let imageJson = {}
+    imageJson.content_type = 'image/' + imgType
+    imageJson.content_length = base64Data.length
+    imageJson.data = Buffer.from(base64Data, 'base64')
+
+    ctx.body = await Model.Image.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, imageJson)
+    console.log('Update image ' + imgId + '.' + imgType + ' successfully!')
   }
 )
 

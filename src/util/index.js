@@ -1,5 +1,4 @@
-import fs from 'fs'
-import mkdirp from 'mkdirp'
+import fse from 'fs-extra'
 import path from 'path'
 import uuid from 'uuid/v1'
 import axios from 'axios'
@@ -106,8 +105,8 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
     let imgFullPath = path.join(imgFolder, imgName)
 
     // save image to file system
-    mkdirp.sync(imgFolder)
-    let writeStream = fs.createWriteStream(imgFullPath)
+    fse.ensureDirSync(imgFolder)
+    let writeStream = fse.createWriteStream(imgFullPath)
     imgData.data.pipe(writeStream)
 
     // save image data to mongodb
@@ -120,7 +119,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
       imageJson.content_length = imgData.headers['content-length']
       imageJson.source = imgURL
       imageJson.owner = owner
-      imageJson.data = fs.readFileSync(imgFullPath)
+      imageJson.data = fse.readFileSync(imgFullPath)
       await Model.Image.create(imageJson)
     })
 
@@ -147,8 +146,8 @@ const saveImgFromData = async (imgData, noteId, owner) => {
     let imgFullPath = path.join(imgFolder, imgName)
 
     // save image to file system
-    mkdirp.sync(imgFolder)
-    await fs.writeFile(imgFullPath, base64Data, 'base64', async (err) => {
+    fse.ensureDirSync(imgFolder)
+    await fse.writeFile(imgFullPath, base64Data, 'base64', async (err) => {
       if (err) {
         console.log(err)
       } else {
@@ -162,7 +161,7 @@ const saveImgFromData = async (imgData, noteId, owner) => {
         imageJson.content_length = base64Data.length
         imageJson.source = 'base64Data'
         imageJson.owner = owner
-        imageJson.data = fs.readFileSync(imgFullPath)
+        imageJson.data = fse.readFileSync(imgFullPath)
         await Model.Image.create(imageJson)
       }
     })

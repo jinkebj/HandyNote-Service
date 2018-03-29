@@ -102,6 +102,7 @@ router.post('/images/:id',
     imageJson.data = Buffer.from(base64Data, 'base64')
 
     ctx.body = await Model.Image.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, imageJson)
+    await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: imgItem.note_id}, {updated_at: new Date()})
     console.log('Update image ' + imgId + '.' + imgType + ' successfully!')
   }
 )

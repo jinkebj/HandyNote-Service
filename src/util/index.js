@@ -25,7 +25,7 @@ export const truncate = (str, size) => {
 
 export const prepareFolderData = (usrId, folderData, folderStatisticsData) => {
   let rootItem = {
-    type: 0,
+    type: 0, // 0: root folder, otherwise: non-root folder
     id: getUsrRootFolderId(usrId),
     label: getUsrRootFolderName(),
     ancestor_ids: [],

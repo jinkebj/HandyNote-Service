@@ -29,3 +29,16 @@ npm run build
 # build and run in production mode
 npm start
 ```
+
+## Generate API doc
+
+``` bash
+# make sure raml2html is installed
+npm install -g raml2html
+
+# generate db schema doc
+raml2html doc/HandyNote-DB-Schema.raml > HandyNote-DB-Schema.html
+
+# generate restful/streaming API doc
+raml2html doc/HandyNote-Service.raml > HandyNote-Service.html
+```

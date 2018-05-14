@@ -3,13 +3,54 @@ title: HandyNote Service
 baseUri: http://localhost:3000/api
 version: v1.0
 mediaType: application/json
+securitySchemes:
+  x-auth-token:
+    description: utilize x-auth-token to authenticate API request.
+    type: x-auth-token
+    describedBy:
+      headers:
+        x-auth-token:
+          description: The token for access API.
+          type: string
+      responses:
+        401:
+          description: Bad or expired token. This can happen if the user have no access token or get expired token.
+  certId:
+    description: pass certId as query parameter for permission check
+    type: Pass Through
+    describedBy:
+      queryParameters:
+        certId:
+          description: certId can be retrieved by x-auth-token.
+          type: string
 
 /notes:
   displayName: Notes
   description: API for manage notes
+  securedBy: [x-auth-token]
   get:
     description: |
-      Get all notes belongs to the user associated with either provided token(from header "X-Auth-Token") or logged in session
+      Get all notes belongs to the user associated with provided token from header "x-auth-token",
+        optionally filtered by a query string <p>
+      Sample: /notes[?folder_id=f9131869-895b-47f0-ba2b-e15ca964be06][&starred=1] <p>
+              /notes?fields=all <p>
+      // "fields" all: return all note fields; otherwise: only return "_id name digest folder_id folder_name starred deleted updated_at"
+    queryParameters:
+      fields:
+        required: false
+        example: all
+      name:
+        required: false
+        example: "my note"
+      folder_id:
+        required: false
+        example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+      folder_name:
+        required: false
+        example: "tech"
+      starred:
+        required: false
+        example: "1"
     responses:
       200:
         body:
@@ -19,20 +60,291 @@ mediaType: application/json
     description: Add a note
     body:
       example: |
-        refer to DB schema -> notes
+        {
+          name: "mynote",
+          folder_id: "6d69b787-15b0-4731-be6c-a76dca76d466",
+          contents: [{"insert":"this is my first note!\n"}], // optional, default to empty
+          text: "this is my first note!\n", // optional, default to empty
+          starred: 0 // optional, default to 0
+        }
     responses:
       201:
         body:
           example: |
-            refer to DB schema -> notes
+            the newly created note, refer to DB schema -> notes
   /{id}:
+    securedBy: [x-auth-token]
     uriParameters:
       id:
         example: a48c3779-eb14-4697-a490-eeb0125196f4
+    get:
+      description: Get detail info of a note
+      responses:
+        204:
+          body:
+            example:  |
+              refer to DB schema -> notes
+    post:
+      description: Update a note
+      body:
+        example: |
+          {
+            name: "mynote",
+            folder_id: "6d69b787-15b0-4731-be6c-a76dca76d466",
+            contents: [{"insert":"this is my first note!\n"}], // optional, default to empty
+            text: "this is my first note!\n", // optional, default to empty
+            starred: 0 // optional, default to 0
+          }
+      responses:
+        201:
+          body:
+            example:  |
+              the updated note, refer to DB schema -> notes
     delete:
       description: Delete a note
       responses:
         204:
           body:
             example:  |
-              refer to DB schema -> notes
+              return the note to be deleted, refer to DB schema -> notes
+
+/folders:
+  displayName: Folders
+  description: API for manage folders
+  securedBy: [x-auth-token]
+  get:
+    description: |
+      Get all folders belongs to the user associated with provided token from header "x-auth-token",
+        optionally filtered by a query string <p>
+      Sample: /folders
+    queryParameters:
+      exclude_id:
+        required: false
+        example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+      name:
+        required: false
+        example: "tech"
+      parent_id:
+        required: false
+        example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+      ancestor_ids:
+        required: false
+        example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+    responses:
+      200:
+        body:
+          example: |
+            array of folders, refer to DB schema -> folders
+  post:
+    description: Add a folder
+    body:
+      example: |
+        {
+          name: "tech",
+          parent_id: "f9131869-895b-47f0-ba2b-e15ca964be06"
+        }
+    responses:
+      201:
+        body:
+          example: |
+            the newly created folder, refer to DB schema -> folders
+  /statistics:
+    securedBy: [x-auth-token]
+    get:
+        description: Get statistics info of folders belongs to the user associated with provided token from header "x-auth-token"
+        responses:
+          204:
+            body:
+              example:  |
+                [
+                  {
+                    "id": "87799140-9211-11e7-8d1c-17e88c155f3c",
+                    "cound": 5
+                  },
+                  {
+                    "id": "ef46dd60-93d7-11e7-b47c-670ba46d470c",
+                    "cound": 1
+                  }
+                ]
+  /tree-info:
+    securedBy: [x-auth-token]
+    get:
+        description: Get tree info of a folders belongs to the user associated with provided token from header "x-auth-token"
+        responses:
+          204:
+            body:
+              example:  |
+                [
+                  {
+                    "type": 0, // 0: root folder, otherwise: non-root folder
+                    "id": "mytest-Root",
+                    "label": "My Folders",
+                    "ancestor_ids": [],
+                    "children": [
+                      {
+                        "id": "87799140-9211-11e7-8d1c-17e88c155f3c",
+                        "label": "Added",
+                        "ancestor_ids": [
+                          "mytest-Root"
+                        ],
+                        "children": [],
+                        "note_count_cur": 5,
+                        "note_count_all": 5
+                      },
+                      {
+                        "id": "ef46dd60-93d7-11e7-b47c-670ba46d470c",
+                        "label": "Updated",
+                        "ancestor_ids": [
+                          "mytest-Root"
+                        ],
+                        "children": [],
+                        "note_count_cur": 1,
+                        "note_count_all": 1
+                      }
+                    ],
+                    "note_count_cur": 1, // count of notes under current folder
+                    "note_count_all": 7 // count of notes under current folder and all sub folders
+                  }
+                ]
+  /{id}:
+    securedBy: [x-auth-token]
+    uriParameters:
+      id:
+        example: f9131869-895b-47f0-ba2b-e15ca964be06
+    get:
+      description: Get detail info of a folder
+      responses:
+        204:
+          body:
+            example:  |
+              refer to DB schema -> folders
+    post:
+      description: Update a folder
+      body:
+        example: |
+          {
+            name: "mynote",
+            parent_id: "f9131869-895b-47f0-ba2b-e15ca964be06"
+          }
+      responses:
+        201:
+          body:
+            example:  |
+              the updated folder, refer to DB schema -> folders
+    delete:
+      description: Delete a folder
+      responses:
+        204:
+          body:
+            example:  |
+              return the folder to be deleted, refer to DB schema -> folders
+
+/trash:
+  displayName: Trash
+  description: API for manage trash
+  securedBy: [x-auth-token]
+  get:
+    description: |
+      Get all trash(include folder trash & note trash) belongs to the user associated with provided token from header "x-auth-token"
+    responses:
+      200:
+        body:
+          example: |
+            array of trash, include folder trash & note trash, refer to DB schema -> notes, folders
+  /empty:
+    securedBy: [x-auth-token]
+    post:
+      description: Empty trash
+      responses:
+        201:
+          body:
+            example:  |
+              {"ok":1, "n":4}
+  /revert:
+    securedBy: [x-auth-token]
+    post:
+      description: Restore all items in trash
+      responses:
+        201:
+          body:
+            example:  |
+              {"ok":1, "n":4}
+  /{id}:
+    securedBy: [x-auth-token]
+    uriParameters:
+      id:
+        example: f9131869-895b-47f0-ba2b-e15ca964be06
+    delete:
+      description: Permanently delete an item from trash
+      responses:
+        204:
+          body:
+            example:  |
+              return the note or folder to be deleted, refer to DB schema -> notes, folders
+    /restore:
+      securedBy: [x-auth-token]
+      post:
+        description: Restore an item from trash
+        responses:
+          201:
+            body:
+              example:  |
+                for note, return the detail info
+                for folder, return {_id: folder_id, type: 'folder'}
+
+/images:
+  displayName: Images
+  description: API for manage images
+  /{id}:
+    uriParameters:
+      id:
+        example: 35446c0a-c00a-47fa-9048-6c89daee2e27
+    get:
+      securedBy: [certId]
+      description: |
+        Get image by provide certId as query param, certId can be retrieved from token <p>
+        Sample: /images/35446c0a-c00a-47fa-9048-6c89daee2e27?certId=f9bd52d1-829c-43c7-b1fa-3c09726d233f
+      queryParameters:
+        certId:
+          required: true
+          example: "f9bd52d1-829c-43c7-b1fa-3c09726d233f"
+      responses:
+        200:
+          body:
+            application/octet-stream:
+              example: binary stream for image file
+    post:
+        securedBy: [x-auth-token]
+        description: Update image
+        body:
+          example: |
+            {
+              data: "data:image/jpeg;base64,{base64Data}"
+            }
+        responses:
+          201:
+            body:
+              example:  |
+                the updated image info, refer to DB schema -> images
+
+/tokens:
+  displayName: Tokens
+  description: API for manage tokens
+  post:
+    description: Request token by provide user name & password
+    body:
+      example: |
+        {
+          usr: "mytest",
+          pwd: "xxxxx"
+        }
+    responses:
+      201:
+        body:
+          example:  |
+            {
+              _id: "f9bd52d1-829c-43c7-b1fa-3c09726d233f",
+              user_id: "mytest",
+              created_at: "2017-07-27T09:16:41.579Z",
+              expired_at: "2017-08-27T09:16:41.579Z"
+            }

@@ -49,7 +49,7 @@ db.images.createIndex({"note_id": 1, "updated_at": -1})
 #### 3. folders
 ```
 {
-    _id: "5e5bb960-19d8-11e8-8f7a-ebb2fe3cd6a6", // unique id or owner + "-Root"
+    _id: "5e5bb960-19d8-11e8-8f7a-ebb2fe3cd6a6", // unique id or ownerid + "-Root"
     name: "myFolder",
     parent_id: "8iok1869-895b-47f0-ba2b-e15ca8a5be06", // parent folder id
     deleted: 0, // 0: not deleted, 1: deleted, 2: deleted with parent folder
@@ -81,7 +81,7 @@ db.notes.createIndex({"owner": 1, "ancestor_ids": 1, "deleted": 1, "name": 1})
 
     // auto managed
     created_at: ISODate("2017-07-27T09:16:41.579Z"),
-    expired_at: ISODate("2017-07-27T09:16:41.579Z")
+    expired_at: ISODate("2017-08-27T09:16:41.579Z")
 }
 db.tokens.createIndex({"user_id": 1})
 ```

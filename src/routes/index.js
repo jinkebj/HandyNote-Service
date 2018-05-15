@@ -7,7 +7,8 @@ import uuid from 'uuid/v1'
 import addDays from 'date-fns/add_days'
 import differenceInHours from 'date-fns/difference_in_hours'
 import Model from '../models'
-import {TOKEN_EXPIRE_DAYS, getUsrRootFolderId, getUsrRootFolderName, getStaticRoot, truncate, prepareFolderData, handleImgCache} from '../util'
+import {TOKEN_EXPIRE_DAYS, HANDYNOTE_BRIEF_FIELDS, getUsrRootFolderId, getUsrRootFolderName, getStaticRoot,
+  truncate, prepareFolderData, handleImgCache} from '../util'
 
 const router = new KoaRouter({
   prefix: '/api'
@@ -34,7 +35,7 @@ router.use(async (ctx, next) => {
 router.get('/images/:id',
   async ctx => {
     let curUsr
-    console.log(ctx.query.certId)
+
     // permission check by certId
     let tokenInfo = await Model.Token.findOne({_id: ctx.query.certId, expired_at: {$gt: new Date()}})
     if (tokenInfo !== null) {
@@ -102,7 +103,11 @@ router.post('/images/:id',
     imageJson.data = Buffer.from(base64Data, 'base64')
 
     ctx.body = await Model.Image.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, imageJson)
-    await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: imgItem.note_id}, {updated_at: new Date()})
+
+    // update usn
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+    await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: imgItem.note_id},
+      {updated_at: new Date(), usn: newUsn})
     console.log('Update image ' + imgId + '.' + imgType + ' successfully!')
   }
 )
@@ -147,12 +152,19 @@ router.get('/notes',
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 0
 
+    // only get notes with usn > skip_usn
+    if (queryJson.skip_usn !== undefined) {
+      let usnJson = {}
+      usnJson.$gt = queryJson.skip_usn
+      queryJson.usn = usnJson
+      delete queryJson.skip_usn
+    }
+
     if (queryJson.fields === 'all') {
       delete queryJson.fields
       ctx.body = await Model.Note.find(queryJson).sort('-updated_at')
     } else {
-      ctx.body = await Model.Note.find(queryJson)
-        .select('_id name digest folder_id folder_name starred deleted updated_at').sort('-updated_at')
+      ctx.body = await Model.Note.find(queryJson).select(HANDYNOTE_BRIEF_FIELDS).sort('-updated_at')
     }
   }
 )
@@ -177,6 +189,10 @@ router.post('/notes',
     if (noteJson.contents !== undefined) {
       noteJson.contents = await handleImgCache(noteJson.contents, noteJson._id, noteJson.owner)
     }
+
+    // update usn
+    noteJson.usn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
     ctx.body = await Model.Note.create(noteJson)
   }
 )
@@ -206,14 +222,18 @@ router.post('/notes/:id',
     if (noteJson.contents !== undefined) {
       noteJson.contents = await handleImgCache(noteJson.contents, ctx.params.id, ctx.curUsr)
     }
-    await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, noteJson)
-    ctx.body = await Model.Note.findById(ctx.params.id)
+
+    // update usn
+    noteJson.usn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+    ctx.body = await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, noteJson, {new: true})
   }
 )
 
 router.delete('/notes/:id',
   async ctx => {
-    ctx.body = await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, {deleted: 1})
+    // update usn
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+    ctx.body = await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, {deleted: 1, usn: newUsn})
   }
 )
 
@@ -222,6 +242,15 @@ router.get('/folders',
     let queryJson = ctx.request.query || {}
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 0
+
+    // only get folders with usn > skip_usn
+    if (queryJson.skip_usn !== undefined) {
+      let usnJson = {}
+      usnJson.$gt = queryJson.skip_usn
+      queryJson.usn = usnJson
+      delete queryJson.skip_usn
+    }
+
     if (queryJson.exclude_id !== undefined) {
       queryJson.ancestor_ids = {$ne: queryJson.exclude_id}
       queryJson._id = {$ne: queryJson.exclude_id}
@@ -297,6 +326,9 @@ router.post('/folders',
       folderJson.ancestor_ids.push(folderJson.parent_id)
     }
 
+    // update usn
+    folderJson.usn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
     ctx.body = await Model.Folder.create(folderJson)
   }
 )
@@ -324,6 +356,9 @@ router.post('/folders/:id',
     delete folderJson.owner
     delete folderJson.deleted
     delete folderJson.ancestor_ids
+
+    // update usn
+    folderJson.usn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
 
     // update data for current folder
     if (folderJson.parent_id !== undefined) {
@@ -354,13 +389,15 @@ router.post('/folders/:id',
       for (let subFolderItem of subFolderItems) {
         let ancestorIdsStr = subFolderItem.ancestor_ids.toString()
         ancestorIdsStr = ancestorIdsStr.replace(oldFolderAncestor, newFolderAncestor)
-        await Model.Folder.findByIdAndUpdate(subFolderItem._id, {ancestor_ids: ancestorIdsStr.split(',')}, {upsert: false})
+        await Model.Folder.findByIdAndUpdate(subFolderItem._id,
+          {ancestor_ids: ancestorIdsStr.split(','), usn: folderJson.usn},
+          {upsert: false})
       }
     }
 
     // update folder_name for all notes under this folder
     if (folderJson.name !== undefined) {
-      await Model.Note.updateMany({folder_id: ctx.params.id}, {folder_name: folderJson.name})
+      await Model.Note.updateMany({folder_id: ctx.params.id}, {folder_name: folderJson.name, usn: folderJson.usn})
     }
 
     ctx.body = await Model.Folder.findById(ctx.params.id)
@@ -380,18 +417,21 @@ router.delete('/folders/:id',
       folderIds.push(folder._id)
     }
 
+    // update usn
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
     // mark delete flag to 2 for notes under this folder + sub folders
-    await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 2})
+    await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 2, usn: newUsn})
 
     // mark delete flag to 2 for sub folders
     let i = folderIds.indexOf(ctx.params.id)
     if (i >= 0) {
       folderIds.splice(i, 1)
     }
-    await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 2})
+    await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 2, usn: newUsn})
 
     // mark delete flag to 1 for this folder
-    ctx.body = await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, {deleted: 1})
+    ctx.body = await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, {deleted: 1, usn: newUsn})
   }
 )
 
@@ -401,7 +441,7 @@ router.get('/trash',
     queryJson.owner = ctx.curUsr
     queryJson.deleted = 1
     let folderTrash = await Model.Folder.find(queryJson).sort('-updated_at')
-    let noteTrash = await Model.Note.find(queryJson).sort('-updated_at')
+    let noteTrash = await Model.Note.find(queryJson).select(HANDYNOTE_BRIEF_FIELDS).sort('-updated_at')
     ctx.body = folderTrash
     ctx.body.push(...noteTrash)
   }
@@ -430,8 +470,10 @@ router.post('/trash/empty',
 
 router.post('/trash/revert',
   async ctx => {
-    await Model.Folder.updateMany({owner: ctx.curUsr, deleted: {$ne: 0}}, {deleted: 0})
-    ctx.body = await Model.Note.updateMany({owner: ctx.curUsr, deleted: {$ne: 0}}, {deleted: 0})
+    // update usn
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+    await Model.Folder.updateMany({owner: ctx.curUsr, deleted: {$ne: 0}}, {deleted: 0, usn: newUsn})
+    ctx.body = await Model.Note.updateMany({owner: ctx.curUsr, deleted: {$ne: 0}}, {deleted: 0, usn: newUsn})
   }
 )
 
@@ -494,6 +536,9 @@ router.post('/trash/:id/restore',
       ctx.throw(400, 'invalid trash id')
     }
 
+    // update usn
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
     if (isFolder) {
       // get id list of this folder + sub folders
       const folderList = await Model.Folder.find(
@@ -505,14 +550,14 @@ router.post('/trash/:id/restore',
       }
 
       // update delete flag to 0 for this folder + sub folders
-      await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 0})
+      await Model.Folder.updateMany({_id: {$in: folderIds}}, {deleted: 0, usn: newUsn})
 
       // update delete flag to 0 for notes under this folder + sub folders
-      await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 0})
+      await Model.Note.updateMany({folder_id: {$in: folderIds}}, {deleted: 0, usn: newUsn})
 
       ctx.body = {_id: ctx.params.id, type: 'folder'}
     } else {
-      ctx.body = await Model.Note.findByIdAndUpdate(ctx.params.id, {deleted: 0})
+      ctx.body = await Model.Note.findByIdAndUpdate(ctx.params.id, {deleted: 0, usn: newUsn})
     }
   }
 )

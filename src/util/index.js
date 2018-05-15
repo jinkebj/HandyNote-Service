@@ -7,6 +7,7 @@ import Model from '../models'
 
 export const TOKEN_EXPIRE_DAYS = 30
 export const HANDYNOTE_PROTOCOL = 'handynote://'
+export const HANDYNOTE_BRIEF_FIELDS = '_id name digest folder_id folder_name starred deleted owner usn created_at updated_at'
 
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
 export const getUsrRootFolderName = () => { return 'My Folders' }

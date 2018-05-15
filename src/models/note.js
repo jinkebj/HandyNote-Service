@@ -11,6 +11,7 @@ const NoteSchema = new mongoose.Schema(
     folder_name: { type: String, required: true },
     starred: { type: Number, default: 0 },
     deleted: { type: Number, required: true, default: 0 },
+    usn: { type: Number, required: true },
     digest: { type: String }
   },
   {
@@ -20,6 +21,7 @@ const NoteSchema = new mongoose.Schema(
 )
 
 NoteSchema.index({ owner: 1, _id: 1 })
+NoteSchema.index({ owner: 1, usn: 1 })
 NoteSchema.index({ owner: 1, deleted: 1, name: 1 })
 NoteSchema.index({ owner: 1, deleted: 1, updated_at: -1 })
 NoteSchema.index({ owner: 1, deleted: 1, starred: -1, updated_at: -1 })

@@ -15,12 +15,14 @@
 
     // auto managed
     owner: "xxx@xxx.xx", // refer to user_id
+    usn: 2 // update sequence number, for delta sync
     folder_name: "myFolder", // refer to folders.name
     digest: "this is my first note ...", // digest of the contents
     created_at: ISODate("2017-07-27T09:16:41.579Z"),
     updated_at: ISODate("2017-07-28T09:16:41.579Z")
 }
 db.notes.createIndex({"owner": 1, "_id": 1})
+db.notes.createIndex({"owner": 1, "usn": 1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "name": 1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "updated_at": -1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "starred": -1, "updated_at": -1})
@@ -56,20 +58,23 @@ db.images.createIndex({"note_id": 1, "updated_at": -1})
 
     // auto managed
     owner: "xxx@xxx.xx", // refer to user_id
+    usn: 3 // update sequence number, for delta sync
     ancestor_ids: ["xxx@xxx.xx-Root", "8iok1869-895b-47f0-ba2b-e15ca8a5be06"], // array of all ancestors' id
     created_at: ISODate("2017-07-27T09:16:41.579Z"),
     updated_at: ISODate("2017-07-28T09:16:41.579Z")
 }
-db.notes.createIndex({"owner": 1, "_id": 1})
-db.notes.createIndex({"owner": 1, "deleted": 1, "name": 1})
-db.notes.createIndex({"owner": 1, "ancestor_ids": 1, "deleted": 1, "name": 1})
+db.folders.createIndex({"owner": 1, "_id": 1})
+db.folders.createIndex({"owner": 1, "usn": 1})
+db.folders.createIndex({"owner": 1, "deleted": 1, "name": 1})
+db.folders.createIndex({"owner": 1, "ancestor_ids": 1, "deleted": 1, "name": 1})
 ```
 
 #### 4. users
 ```
 {
     _id: "mytest", // the unique user_id
-    password: "xxxxx"
+    password: "xxxxx",
+    usn: 3 // update sequence number, for delta sync, increased each time note/folder got updated
 }
 ```
 

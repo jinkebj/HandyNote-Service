@@ -42,7 +42,7 @@ securitySchemes:
         example: all
       skip_usn:
         required: false
-        example: 28
+        example: "28"
       name:
         required: false
         example: "my note"
@@ -128,7 +128,7 @@ securitySchemes:
         example: "f9131869-895b-47f0-ba2b-e15ca964be06"
       skip_usn:
         required: false
-        example: 28
+        example: "28"
       name:
         required: false
         example: "tech"
@@ -334,6 +334,21 @@ securitySchemes:
             body:
               example:  |
                 the updated image info, refer to DB schema -> images
+
+/profiles:
+  displayName: Profiles
+  description: API for get profile info
+  securedBy: [x-auth-token]
+  get:
+    description: |
+      Get profile info for the user associated with provided token from header "x-auth-token"
+    responses:
+      200:
+        body:
+          example: |
+            {
+              latestUsn: 31 // the latest update sequence number on server
+            }
 
 /tokens:
   displayName: Tokens

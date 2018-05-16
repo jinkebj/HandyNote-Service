@@ -562,11 +562,11 @@ router.post('/trash/:id/restore',
   }
 )
 
-router.get('/',
-  ctx => {
+router.get('/profiles',
+  async ctx => {
+    let latestUsn = (await Model.User.findById(ctx.curUsr)).usn
     ctx.body = {
-      result: 'success',
-      content: 'Pass test!'
+      latestUsn: latestUsn
     }
   }
 )

@@ -76,6 +76,22 @@ securitySchemes:
         body:
           example: |
             the newly created note, refer to DB schema -> notes
+  /action:
+    securedBy: [x-auth-token]
+    post:
+      description: Perform action on notes
+      body:
+        example: |
+          {
+            action: "filter_non_exist", // filter non-exist node id from the given ids
+            ids: "6d69b787-15b0-4731-be6c-a76dca76d466,a48c3779-eb14-4697-a490-eeb0125196f4" // the given ids separated by comma
+          }
+      responses:
+        201:
+          body:
+            example:  |
+              // response for action "filter_non_exist"
+              ["6d69b787-15b0-4731-be6c-a76dca76d466"]
   /{id}:
     securedBy: [x-auth-token]
     uriParameters:
@@ -156,6 +172,22 @@ securitySchemes:
         body:
           example: |
             the newly created folder, refer to DB schema -> folders
+  /action:
+    securedBy: [x-auth-token]
+    post:
+      description: Perform action on folders
+      body:
+        example: |
+          {
+            action: "filter_non_exist", // filter non-exist folder id from the given ids
+            ids: "6d69b787-15b0-4731-be6c-a76dca76d466,a48c3779-eb14-4697-a490-eeb0125196f4" // the given ids separated by comma
+          }
+      responses:
+        201:
+          body:
+            example:  |
+              // response for action "filter_non_exist"
+              ["6d69b787-15b0-4731-be6c-a76dca76d466"]
   /statistics:
     securedBy: [x-auth-token]
     get:

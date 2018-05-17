@@ -197,6 +197,29 @@ router.post('/notes',
   }
 )
 
+router.post('/notes/action',
+  KoaBody({
+    jsonLimit: '30mb'
+  }),
+  async ctx => {
+    const actionJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
+    if (actionJson.action !== undefined && actionJson.action === 'filter_non_exist') {
+      let idArr = actionJson.ids.split(',')
+      let noteIds = await Model.Note.find({_id: {$in: idArr}, deleted: 0}).select('_id')
+
+      let idSet = new Set(idArr)
+      for (let noteId of noteIds) {
+        idSet.delete(noteId._id)
+      }
+
+      ctx.body = [...idSet]
+    } else {
+      ctx.status = 400
+      ctx.body = 'invalid action type!'
+    }
+  }
+)
+
 router.get('/notes/:id',
   async ctx => {
     ctx.body = await Model.Note.findOne({owner: ctx.curUsr, _id: ctx.params.id})
@@ -330,6 +353,29 @@ router.post('/folders',
     folderJson.usn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
 
     ctx.body = await Model.Folder.create(folderJson)
+  }
+)
+
+router.post('/folders/action',
+  KoaBody({
+    jsonLimit: '30mb'
+  }),
+  async ctx => {
+    const actionJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
+    if (actionJson.action !== undefined && actionJson.action === 'filter_non_exist') {
+      let idArr = actionJson.ids.split(',')
+      let folderIds = await Model.Folder.find({_id: {$in: idArr}, deleted: 0}).select('_id')
+
+      let idSet = new Set(idArr)
+      for (let folderId of folderIds) {
+        idSet.delete(folderId._id)
+      }
+
+      ctx.body = [...idSet]
+    } else {
+      ctx.status = 400
+      ctx.body = 'invalid action type!'
+    }
   }
 )
 

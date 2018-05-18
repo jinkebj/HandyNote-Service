@@ -1,8 +1,32 @@
-# HandyNote-Service
+# HandyNote Service
 
-> Provide restful/streaming API for HandyNote-Web & HandyNote-Mobile
+> Provide restful/streaming API for HandyNote-Web & HandyNote-Mobile, utilize mongodb as backend database
 
-## Quick Start
+- [HandyNote overall info](https://github.com/jinkebj/HandyNote)
+
+## Software Requirements
+
+- [Node.js 8.x or above](https://nodejs.org)
+- [MongoDB 3.2 or above](https://www.mongodb.com)
+
+## Supported API
+- [HandyNote Service API raml file](https://github.com/jinkebj/HandyNote-Service/blob/master/doc/HandyNote-Service.raml)
+- [HandyNote DB Schema](https://github.com/jinkebj/HandyNote-Service/blob/master/doc/HandyNote-DB-Schema.md)
+
+## Generate HTML version apidoc
+
+``` bash
+# make sure raml2html is installed
+npm install -g raml2html
+
+# generate db schema doc
+raml2html doc/HandyNote-DB-Schema.raml > HandyNote-DB-Schema.html
+
+# generate restful/streaming API doc
+raml2html doc/HandyNote-Service.raml > HandyNote-Service.html
+```
+
+## Development Setup
 
 ``` bash
 # Optional, set npm mirror to speed up npm install in China
@@ -28,17 +52,4 @@ npm run build
 
 # build and run in production mode
 npm start
-```
-
-## Generate API doc
-
-``` bash
-# make sure raml2html is installed
-npm install -g raml2html
-
-# generate db schema doc
-raml2html doc/HandyNote-DB-Schema.raml > HandyNote-DB-Schema.html
-
-# generate restful/streaming API doc
-raml2html doc/HandyNote-Service.raml > HandyNote-Service.html
 ```

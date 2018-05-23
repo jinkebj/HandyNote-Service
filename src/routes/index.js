@@ -16,7 +16,9 @@ const router = new KoaRouter({
 
 // validate loggin user
 router.use(async (ctx, next) => {
-  if (ctx.url === '/api/tokens/' || (ctx.url.startsWith('/api/images/') && ctx.method.toUpperCase() === 'GET')) {
+  if (ctx.url === '/api/tests' ||
+    ctx.url === '/api/tokens' ||
+    (ctx.url.startsWith('/api/images') && ctx.method.toUpperCase() === 'GET')) {
     await next()
   } else {
     let currentTime = new Date()
@@ -613,6 +615,14 @@ router.get('/profiles',
     let latestUsn = (await Model.User.findById(ctx.curUsr)).usn
     ctx.body = {
       latestUsn: latestUsn
+    }
+  }
+)
+
+router.get('/tests',
+  (ctx) => {
+    ctx.body = {
+      result: 'success'
     }
   }
 )

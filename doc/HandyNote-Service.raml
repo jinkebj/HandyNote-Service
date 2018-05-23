@@ -403,3 +403,17 @@ securitySchemes:
               created_at: "2017-07-27T09:16:41.579Z",
               expired_at: "2017-08-27T09:16:41.579Z"
             }
+
+/tests:
+  displayName: Tests
+  description: API for test availability of current HandyNote Service
+  get:
+    description: |
+      Get availability of current HandyNote Service
+    responses:
+      200:
+        body:
+          example: |
+            {
+              result: "success"
+            }

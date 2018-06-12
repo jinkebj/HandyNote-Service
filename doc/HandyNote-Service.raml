@@ -100,6 +100,35 @@ securitySchemes:
             example:  |
               // response for action "filter_non_exist"
               ["6d69b787-15b0-4731-be6c-a76dca76d466"]
+  /statistics:
+    securedBy: [x-auth-token]
+    get:
+        description: |
+          Get statistics info of notes belongs to the user associated with provided token from header "x-auth-token",
+          optionally filtered by a query string <p>
+          Sample: /notes/statistics[?folder_id=f9131869-895b-47f0-ba2b-e15ca964be06][&starred=1] <p>
+          // "skip_usn": only return notes with usn > skip_usn <p>
+        queryParameters:
+          skip_usn:
+            required: false
+            example: "28"
+          folder_id:
+            required: false
+            example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+          starred:
+            required: false
+            example: "1"
+        responses:
+          200:
+            body:
+              example: |
+                {
+                  query: {
+                    owner: "mytest",
+                    deleted: 0
+                  },
+                  count: 10
+                }
   /{id}:
     securedBy: [x-auth-token]
     uriParameters:

@@ -221,6 +221,25 @@ router.post('/notes',
   }
 )
 
+router.get('/notes/statistics',
+  async ctx => {
+    let queryJson = ctx.request.query || {}
+    queryJson.owner = ctx.curUsr
+    queryJson.deleted = 0
+
+    // only get notes with usn > skip_usn
+    if (queryJson.skip_usn !== undefined) {
+      let usnJson = {}
+      usnJson.$gt = queryJson.skip_usn
+      queryJson.usn = usnJson
+      delete queryJson.skip_usn
+    }
+    let count = await Model.Note.find(queryJson).count()
+
+    ctx.body = {query: queryJson, count: count}
+  }
+)
+
 router.post('/notes/action',
   KoaBody({
     jsonLimit: '30mb'

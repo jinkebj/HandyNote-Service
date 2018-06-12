@@ -32,10 +32,12 @@ securitySchemes:
     description: |
       Get all notes belongs to the user associated with provided token from header "x-auth-token",
         optionally filtered by a query string <p>
-      Sample: /notes[?folder_id=f9131869-895b-47f0-ba2b-e15ca964be06][&starred=1] <p>
+      Sample: /notes[?folder_id=f9131869-895b-47f0-ba2b-e15ca964be06][&starred=1][&skip=5][&limit=10] <p>
               /notes[?fields=all][&skip_usn=28] <p>
       // "fields" all: return all note fields with detail content; otherwise: only return digest of note content <p>
-      // "skip_usn": only return notes with usn > skip_usn
+      // "skip_usn": only return notes with usn > skip_usn <p>
+      // "skip": the number of notes to skip <p>
+      // "limit": limit the number of notes to return
     queryParameters:
       fields:
         required: false
@@ -43,6 +45,12 @@ securitySchemes:
       skip_usn:
         required: false
         example: "28"
+      skip:
+        required: false
+        example: "5"
+      limit:
+        required: false
+        example: "10"
       name:
         required: false
         example: "my note"

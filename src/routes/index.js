@@ -162,12 +162,34 @@ router.get('/notes',
       delete queryJson.skip_usn
     }
 
+    // skip item
+    let skip = -1
+    if (queryJson.skip !== undefined) {
+      skip = parseInt(queryJson.skip)
+      delete queryJson.skip
+    }
+
+    // limit return count
+    let limit = -1
+    if (queryJson.limit !== undefined) {
+      limit = parseInt(queryJson.limit)
+      delete queryJson.limit
+    }
+
+    // check if need return all fields
+    let query
     if (queryJson.fields === 'all') {
       delete queryJson.fields
-      ctx.body = await Model.Note.find(queryJson).sort('-updated_at')
+      query = Model.Note.find(queryJson)
     } else {
-      ctx.body = await Model.Note.find(queryJson).select(HANDYNOTE_BRIEF_FIELDS).sort('-updated_at')
+      query = Model.Note.find(queryJson).select(HANDYNOTE_BRIEF_FIELDS)
     }
+
+    query = query.sort('-updated_at')
+    if (skip > 0) query = query.skip(skip)
+    if (limit > 0) query = query.limit(limit)
+
+    ctx.body = await query.exec()
   }
 )
 

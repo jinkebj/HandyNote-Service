@@ -26,5 +26,6 @@ NoteSchema.index({ owner: 1, deleted: 1, name: 1 })
 NoteSchema.index({ owner: 1, deleted: 1, updated_at: -1 })
 NoteSchema.index({ owner: 1, deleted: 1, starred: -1, updated_at: -1 })
 NoteSchema.index({ folder_id: 1, deleted: 1, updated_at: -1 })
+NoteSchema.index({ name: 'text', text: 'text', folder_name: 'text' })
 
 export default mongoose.model('Note', NoteSchema)

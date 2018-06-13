@@ -36,6 +36,7 @@ securitySchemes:
               /notes[?fields=all][&skip_usn=28] <p>
       // "fields" all: return all note fields with detail content; otherwise: only return digest of note content <p>
       // "skip_usn": only return notes with usn > skip_usn <p>
+      // "search": only return notes match search string <p>
       // "skip": the number of notes to skip <p>
       // "limit": limit the number of notes to return
     queryParameters:
@@ -45,6 +46,9 @@ securitySchemes:
       skip_usn:
         required: false
         example: "28"
+      search:
+        required: false
+        example: "java"
       skip:
         required: false
         example: "5"
@@ -108,10 +112,14 @@ securitySchemes:
           optionally filtered by a query string <p>
           Sample: /notes/statistics[?folder_id=f9131869-895b-47f0-ba2b-e15ca964be06][&starred=1] <p>
           // "skip_usn": only return notes with usn > skip_usn <p>
+          // "search": only return notes match search string
         queryParameters:
           skip_usn:
             required: false
             example: "28"
+          search:
+            required: false
+            example: "java"
           folder_id:
             required: false
             example: "f9131869-895b-47f0-ba2b-e15ca964be06"

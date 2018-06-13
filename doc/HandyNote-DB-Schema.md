@@ -27,6 +27,7 @@ db.notes.createIndex({"owner": 1, "deleted": 1, "name": 1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "updated_at": -1})
 db.notes.createIndex({"owner": 1, "deleted": 1, "starred": -1, "updated_at": -1})
 db.notes.createIndex({"folder_id": 1, "deleted": 1, "updated_at": -1})
+db.notes.createIndex({ name: 'text', text: 'text', folder_name: 'text' })
 ```
 
 #### 2. images

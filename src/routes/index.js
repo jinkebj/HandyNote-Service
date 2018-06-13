@@ -162,14 +162,22 @@ router.get('/notes',
       delete queryJson.skip_usn
     }
 
-    // skip item
+    // only get notes match search string
+    if (queryJson.search !== undefined) {
+      let searchJson = {}
+      searchJson.$search = queryJson.search
+      queryJson.$text = searchJson
+      delete queryJson.search
+    }
+
+    // skip items
     let skip = -1
     if (queryJson.skip !== undefined) {
       skip = parseInt(queryJson.skip)
       delete queryJson.skip
     }
 
-    // limit return count
+    // limit returned items
     let limit = -1
     if (queryJson.limit !== undefined) {
       limit = parseInt(queryJson.limit)
@@ -234,8 +242,16 @@ router.get('/notes/statistics',
       queryJson.usn = usnJson
       delete queryJson.skip_usn
     }
-    let count = await Model.Note.find(queryJson).count()
 
+    // only get notes match search string
+    if (queryJson.search !== undefined) {
+      let searchJson = {}
+      searchJson.$search = queryJson.search
+      queryJson.$text = searchJson
+      delete queryJson.search
+    }
+
+    let count = await Model.Note.find(queryJson).count()
     ctx.body = {query: queryJson, count: count}
   }
 )

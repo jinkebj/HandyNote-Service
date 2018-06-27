@@ -44,6 +44,12 @@ export HANDYNOTE_SERVICE_PORT={portnum}
 export HANDYNOTE_MONGO_URL=mongodb://{usr}:{pwd}@{ip}/HandyNote
 export HANDYNOTE_STATIC_ROOT=/home/xxx/xxx
 
+# Optional, set HANDYNOTE_CERT_PATH
+# if set, HandyNote-Service will run under https server
+#     please rename ssl key & cert file to server.key & server.pem then put it under HANDYNOTE_CERT_PATH
+# if not set, HandyNote-Service will run under http server
+export HANDYNOTE_CERT_PATH=/home/xxx/xxx
+
 # run in debug mode with hot reload
 npm run dev
 

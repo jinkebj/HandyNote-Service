@@ -412,6 +412,66 @@ securitySchemes:
               example:  |
                 the updated image info, refer to DB schema -> images
 
+/attachments:
+  displayName: Attachments
+  description: API for manage attachments
+  securedBy: [x-auth-token]
+  get:
+    description: |
+      Get attachements list info belongs to the user associated with provided token from header "x-auth-token",
+        optionally filtered by a query string <p>
+      Sample: /attachements[?note_id=f9131869-895b-47f0-ba2b-e15ca964be06]
+    queryParameters:
+      note_id:
+        required: false
+        example: "f9131869-895b-47f0-ba2b-e15ca964be06"
+    responses:
+      200:
+        body:
+          example: |
+            array of attachements, refer to DB schema -> attachements
+  post:
+      description: Add an attachment
+      body:
+        "multipart/form-data":
+          example: |
+            // Post params
+            Content-Disposition: form-data; name="note_id"
+            f9131869-895b-47f0-ba2b-e15ca964be06
+            Content-Disposition: form-data; name="files"; filename="safety.zip"
+            Bin Data
+      responses:
+        201:
+          body:
+            example:  |
+              the attachment file info, refer to DB schema -> attachements
+  /{id}:
+    uriParameters:
+      id:
+        example: a48c3779-eb14-4697-a490-eeb0125196f4
+    get:
+      securedBy: [certId]
+      description: |
+        Get an attachment by provide certId as query param, certId can be retrieved from token <p>
+        Sample: /attachments/a48c3779-eb14-4697-a490-eeb0125196f4?certId=f9bd52d1-829c-43c7-b1fa-3c09726d233f
+      queryParameters:
+        certId:
+          required: true
+          example: "f9bd52d1-829c-43c7-b1fa-3c09726d233f"
+      responses:
+        204:
+          body:
+            application/octet-stream:
+              example: binary stream for attachment file
+    delete:
+      securedBy: [x-auth-token]
+      description: Delete an attachment
+      responses:
+        204:
+          body:
+            example:  |
+              return the attachment info to be deleted, refer to DB schema -> attachments
+
 /profiles:
   displayName: Profiles
   description: API for get profile info

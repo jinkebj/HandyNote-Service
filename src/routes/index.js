@@ -18,7 +18,8 @@ const router = new KoaRouter({
 router.use(async (ctx, next) => {
   if (ctx.url === '/api/tests' ||
     ctx.url === '/api/tokens' ||
-    (ctx.url.startsWith('/api/images') && ctx.method.toUpperCase() === 'GET')) {
+    (ctx.url.startsWith('/api/images/') && ctx.method.toUpperCase() === 'GET') ||
+    (ctx.url.startsWith('/api/attachments/') && ctx.method.toUpperCase() === 'GET')) {
     await next()
   } else {
     let currentTime = new Date()
@@ -111,6 +112,123 @@ router.post('/images/:id',
     await Model.Note.findOneAndUpdate({owner: ctx.curUsr, _id: imgItem.note_id},
       {updated_at: new Date(), usn: newUsn})
     console.log('Update image ' + imgId + '.' + imgType + ' successfully!')
+  }
+)
+
+router.get('/attachments',
+  async ctx => {
+    const HANDYNOTE_ATTA_BRIEF_FIELDS = '_id note_id name type size owner created_at updated_at'
+    let queryJson = ctx.request.query || {}
+    queryJson.owner = ctx.curUsr
+    let query = Model.Attachment.find(queryJson).select(HANDYNOTE_ATTA_BRIEF_FIELDS).sort('-updated_at')
+    ctx.body = await query.exec()
+  }
+)
+
+router.post('/attachments',
+  KoaBody({
+    jsonLimit: '120mb',
+    multipart: true
+  }),
+  async ctx => {
+    const attaBodyJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
+    const attaFilesJson = ctx.request.files || {}
+
+    // check attachment info
+    if (!attaBodyJson || !attaBodyJson.note_id || !attaFilesJson || !attaFilesJson.file) {
+      ctx.throw(400, 'invalid attachement data')
+    }
+
+    // max file size check - 16M
+    if (attaFilesJson.file.size > 16777216) {
+      ctx.throw(400, 'exceed max file size')
+    }
+
+    // owner check
+    const owner = ctx.curUsr
+    let noteCount = await Model.Note.count({owner: owner, _id: attaBodyJson.note_id})
+    if (noteCount === 0) {
+      ctx.throw(400, 'invalid note id')
+    }
+
+    // duplicate file name check
+    let fileCount = await Model.Attachment.count({note_id: attaBodyJson.note_id, name: attaFilesJson.file.name})
+    if (fileCount > 0) {
+      ctx.throw(400, 'duplicate file name')
+    }
+
+    // ensure attachment directory
+    const attaDir = path.join(getStaticRoot(), attaBodyJson.note_id)
+    fse.ensureDirSync(attaDir)
+
+    // save attachment to file system
+    const file = attaFilesJson.file
+    const filePath = path.join(attaDir, file.name)
+    const readerStream = fse.createReadStream(file.path)
+    const writerStream = fse.createWriteStream(filePath)
+    readerStream.pipe(writerStream)
+
+    // save attachment data to mongodb
+    const attachmentJson = {}
+    attachmentJson._id = uuid()
+    attachmentJson.note_id = attaBodyJson.note_id
+    attachmentJson.name = file.name
+    attachmentJson.type = file.type
+    attachmentJson.size = file.size || 0
+    attachmentJson.owner = owner
+    writerStream.on('close', async () => {
+      console.log('Save attachment to local server as ' + file.name + ' successfully!')
+      attachmentJson.data = fse.readFileSync(filePath)
+      await Model.Attachment.create(attachmentJson)
+    })
+
+    ctx.body = attachmentJson
+  }
+)
+
+// serve static attachment file, utilize certId for permission check
+router.get('/attachments/:id',
+  async ctx => {
+    let curUsr
+
+    // permission check by certId
+    let tokenInfo = await Model.Token.findOne({_id: ctx.query.certId, expired_at: {$gt: new Date()}})
+    if (tokenInfo !== null) {
+      curUsr = tokenInfo.user_id
+    } else {
+      ctx.throw(401, 'invalid certId')
+    }
+
+    // owner check
+    const attachmentId = ctx.params.id
+    const attachmentItem = await Model.Attachment.findOne({owner: curUsr, _id: attachmentId})
+    if (attachmentItem === null) {
+      ctx.throw(400, 'invalid attachment id')
+    }
+
+    let attachmentFolder = path.join(getStaticRoot(), attachmentItem.note_id)
+    let fileFullPath = path.join(attachmentFolder, attachmentItem.name)
+    if (!fse.existsSync(fileFullPath)) {
+      fse.ensureDirSync(attachmentFolder)
+      fse.writeFileSync(fileFullPath, attachmentItem.data)
+      console.log('restore attachment file: ' + fileFullPath)
+    }
+    await send(ctx, path.join(attachmentItem.note_id, attachmentItem.name),
+      {root: getStaticRoot(), maxage: 30 * 24 * 60 * 60 * 1000})
+  }
+)
+
+router.delete('/attachments/:id',
+  async ctx => {
+    // owner check
+    const attachmentId = ctx.params.id
+    const attachmentItem = await Model.Attachment.findOne({owner: ctx.curUsr, _id: attachmentId})
+    if (attachmentItem === null) {
+      ctx.throw(400, 'invalid attachment id')
+    }
+
+    fse.removeSync(path.join(getStaticRoot(), attachmentItem.note_id, attachmentItem.name))
+    ctx.body = await Model.Attachment.findByIdAndRemove(attachmentId)
   }
 )
 

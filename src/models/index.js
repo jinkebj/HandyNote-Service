@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import config from '../../config'
 import Note from './note'
 import Image from './image'
+import Attachment from './attachment'
 import Folder from './folder'
 import User from './user'
 import Token from './token'
@@ -16,4 +17,4 @@ mongoose.connect(config.MONGO_URL, { useMongoClient: true }).then(
   }
 )
 
-export default { Note, Image, Folder, User, Token }
+export default { Note, Image, Attachment, Folder, User, Token }

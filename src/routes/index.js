@@ -213,6 +213,7 @@ router.get('/attachments/:id',
       fse.writeFileSync(fileFullPath, attachmentItem.data)
       console.log('restore attachment file: ' + fileFullPath)
     }
+    ctx.attachment(attachmentItem.name)
     await send(ctx, path.join(attachmentItem.note_id, attachmentItem.name),
       {root: getStaticRoot(), maxage: 30 * 24 * 60 * 60 * 1000})
   }

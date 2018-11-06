@@ -685,7 +685,12 @@ router.post('/trash/empty',
       await Model.Image.deleteMany({note_id: deletedNoteItem._id})
     }
 
-    // delete image files related with deleted notes
+    // delete attachment DB data related with deleted notes
+    for (let deletedNoteItem of deletedNoteItems) {
+      await Model.Attachment.deleteMany({note_id: deletedNoteItem._id})
+    }
+
+    // delete image & attachment files related with deleted notes
     for (let deletedNoteItem of deletedNoteItems) {
       fse.removeSync(path.join(getStaticRoot(), deletedNoteItem._id))
     }
@@ -734,7 +739,11 @@ router.delete('/trash/:id',
         await Model.Image.deleteMany({note_id: deletedNoteItem._id})
       }
 
-      // delete image files related with deleted notes
+      // delete attachment DB data related with deleted notes
+      for (let deletedNoteItem of deletedNoteItems) {
+        await Model.Attachment.deleteMany({note_id: deletedNoteItem._id})
+      }
+      // delete image & attachment files related with deleted notes
       for (let deletedNoteItem of deletedNoteItems) {
         fse.removeSync(path.join(getStaticRoot(), deletedNoteItem._id))
       }
@@ -746,6 +755,7 @@ router.delete('/trash/:id',
       ctx.body = await Model.Folder.findByIdAndRemove(ctx.params.id)
     } else {
       await Model.Image.deleteMany({note_id: ctx.params.id})
+      await Model.Attachment.deleteMany({note_id: ctx.params.id})
       fse.removeSync(path.join(getStaticRoot(), ctx.params.id))
       ctx.body = await Model.Note.findByIdAndRemove(ctx.params.id)
     }

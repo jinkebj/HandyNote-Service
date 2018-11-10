@@ -94,7 +94,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
 
   if (!imgData.headers['content-type'].match(/image/)) {
     console.error('Invalid file type, not an image!')
-  } else if (imgData.headers['content-length'] > 10 * 1024 * 1024) { // 10mb
+  } else if (imgData.headers['content-length'] > 10 * 1024 * 1024) { // 10MB
     console.error('Image too big!')
   } else {
     console.log('Fetch remote image:' + imgURL)
@@ -132,7 +132,7 @@ const saveImgFromURL = async (imgURL, noteId, owner) => {
 const saveImgFromData = async (imgData, noteId, owner) => {
   let ret = imgData
 
-  if (imgData.length > 10 * 1024) { // 10kb
+  if (imgData.length > 10 * 1024) { // 10KB
     // imgData format is: data:image/jpeg;base64,{base64Data}
     let base64DataStartIndex = imgData.indexOf(',') + 1
     let base64Data = imgData.substring(base64DataStartIndex)
@@ -207,7 +207,33 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
     }
   }
 
-  // handle deleted image
-  await Model.Image.deleteMany({_id: {$nin: imgIds}, note_id: noteId})
+  // deleted unused image from mongodb
+  let delImgs = await Model.Image.find({_id: {$nin: imgIds}, note_id: noteId}).select('_id')
+  let delImgIds = []
+  for (let delImg of delImgs) {
+    delImgIds.push(delImg._id)
+  }
+  await Model.Image.deleteMany({_id: {$in: delImgIds}})
+
+  // delete unused image from file system
+  let imgFolder = path.join(getStaticRoot(), noteId)
+  let fileList = fse.readdirSync(imgFolder)
+  let fileCount = fileList.length
+  let deleteCount = 0
+  for (let file of fileList) {
+    for (let imgId of delImgIds) {
+      if (file.startsWith(imgId)) {
+        fse.removeSync(path.join(imgFolder, file))
+        deleteCount++
+        break
+      }
+    }
+  }
+
+  // delete empty folder
+  if (fileCount === deleteCount) {
+    fse.removeSync(imgFolder)
+  }
+
   return retJson
 }

@@ -104,8 +104,10 @@ router.post('/images/:id',
     imageJson.content_type = 'image/' + imgType
     imageJson.content_length = base64Data.length
     imageJson.data = Buffer.from(base64Data, 'base64')
-
     ctx.body = await Model.Image.findOneAndUpdate({owner: ctx.curUsr, _id: ctx.params.id}, imageJson)
+
+    // write new image file
+    fse.writeFileSync(imgFullPath, imageJson.data)
 
     // update usn
     let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
@@ -228,7 +230,17 @@ router.delete('/attachments/:id',
       ctx.throw(400, 'invalid attachment id')
     }
 
-    fse.removeSync(path.join(getStaticRoot(), attachmentItem.note_id, attachmentItem.name))
+    // delete from file system
+    let attachmentFolder = path.join(getStaticRoot(), attachmentItem.note_id)
+    fse.removeSync(path.join(attachmentFolder, attachmentItem.name))
+
+    // delete empty folder
+    let fileCount = fse.readdirSync(attachmentFolder).length
+    if (fileCount === 0) {
+      fse.removeSync(attachmentFolder)
+    }
+
+    // delete from mongodb
     ctx.body = await Model.Attachment.findByIdAndRemove(attachmentId)
   }
 )
@@ -743,6 +755,7 @@ router.delete('/trash/:id',
       for (let deletedNoteItem of deletedNoteItems) {
         await Model.Attachment.deleteMany({note_id: deletedNoteItem._id})
       }
+
       // delete image & attachment files related with deleted notes
       for (let deletedNoteItem of deletedNoteItems) {
         fse.removeSync(path.join(getStaticRoot(), deletedNoteItem._id))

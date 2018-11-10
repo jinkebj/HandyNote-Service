@@ -11,6 +11,7 @@ const NoteSchema = new mongoose.Schema(
     folder_name: { type: String, required: true },
     starred: { type: Number, default: 0 },
     deleted: { type: Number, required: true, default: 0 },
+    has_attachment: { type: Boolean, required: true, default: false },
     usn: { type: Number, required: true },
     digest: { type: String }
   },

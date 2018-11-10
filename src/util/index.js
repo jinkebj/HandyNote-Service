@@ -7,7 +7,7 @@ import Model from '../models'
 
 export const TOKEN_EXPIRE_DAYS = 30
 export const HANDYNOTE_PROTOCOL = 'handynote://'
-export const HANDYNOTE_BRIEF_FIELDS = '_id name digest folder_id folder_name starred deleted owner usn created_at updated_at'
+export const HANDYNOTE_BRIEF_FIELDS = '_id name digest folder_id folder_name starred deleted owner has_attachment usn created_at updated_at'
 
 export const getUsrRootFolderId = (usrId) => { return usrId + '-Root' }
 export const getUsrRootFolderName = () => { return 'My Folders' }
@@ -209,6 +209,8 @@ export const handleImgCache = async (contentsJson, noteId, owner) => {
 
   // deleted unused image from mongodb
   let delImgs = await Model.Image.find({_id: {$nin: imgIds}, note_id: noteId}).select('_id')
+  if (delImgs.length === 0) return retJson
+
   let delImgIds = []
   for (let delImg of delImgs) {
     delImgIds.push(delImg._id)

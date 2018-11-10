@@ -148,8 +148,8 @@ router.post('/attachments',
 
     // owner check
     const owner = ctx.curUsr
-    let noteCount = await Model.Note.count({owner: owner, _id: attaBodyJson.note_id})
-    if (noteCount === 0) {
+    let noteItem = await Model.Note.findOne({owner: owner, _id: attaBodyJson.note_id})
+    if (!noteItem) {
       ctx.throw(400, 'invalid note id')
     }
 
@@ -185,6 +185,17 @@ router.post('/attachments',
     })
 
     ctx.body = attachmentJson
+
+    // update has_attachment & usn for note
+    let updateJson = {}
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
+    updateJson.usn = newUsn
+    updateJson.updated_at = new Date()
+    if (!noteItem.has_attachment) {
+      updateJson.has_attachment = true
+    }
+    await Model.Note.findByIdAndUpdate(attaBodyJson.note_id, updateJson)
   }
 )
 
@@ -230,6 +241,23 @@ router.delete('/attachments/:id',
       ctx.throw(400, 'invalid attachment id')
     }
 
+    // delete from mongodb
+    ctx.body = await Model.Attachment.findByIdAndRemove(attachmentId)
+
+    // update has_attachment & usn for note
+    let updateJson = {}
+    let newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+    updateJson.usn = newUsn
+    updateJson.updated_at = new Date()
+
+    let attachmentCount = await Model.Attachment.count({note_id: attachmentItem.note_id})
+    if (attachmentCount > 0) {
+      updateJson.has_attachment = true
+    } else {
+      updateJson.has_attachment = false
+    }
+    await Model.Note.findByIdAndUpdate(attachmentItem.note_id, updateJson)
+
     // delete from file system
     let attachmentFolder = path.join(getStaticRoot(), attachmentItem.note_id)
     fse.removeSync(path.join(attachmentFolder, attachmentItem.name))
@@ -239,9 +267,6 @@ router.delete('/attachments/:id',
     if (fileCount === 0) {
       fse.removeSync(attachmentFolder)
     }
-
-    // delete from mongodb
-    ctx.body = await Model.Attachment.findByIdAndRemove(attachmentId)
   }
 )
 

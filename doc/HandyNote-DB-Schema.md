@@ -15,6 +15,7 @@
 
     // auto managed
     owner: "xxx@xxx.xx", // refer to user_id
+    has_attachment: false,
     usn: 2 // update sequence number, for delta sync
     folder_name: "myFolder", // refer to folders.name
     digest: "this is my first note ...", // digest of the contents

@@ -494,7 +494,7 @@ router.get('/folders',
       queryJson._id = {$ne: queryJson.exclude_id}
       delete queryJson.exclude_id
     }
-    ctx.body = await Model.Folder.find(queryJson).sort('name')
+    ctx.body = await Model.Folder.find(queryJson).sort('order')
   }
 )
 
@@ -587,6 +587,14 @@ router.post('/folders/action',
       }
 
       ctx.body = [...idSet]
+    } else if (actionJson.action !== undefined && actionJson.action === 'adjust_order') {
+      // update usn
+      const newUsn = (await Model.User.findByIdAndUpdate(ctx.curUsr, {$inc: {usn: 1}}, {new: true})).usn
+
+      for (let i = 0; i < actionJson.ids.length; i++) {
+        await Model.Folder.findOneAndUpdate({owner: ctx.curUsr, _id: actionJson.ids[i]}, {order: i + 1, usn: newUsn})
+      }
+      ctx.body = 'success'
     } else {
       ctx.status = 400
       ctx.body = 'invalid action type!'

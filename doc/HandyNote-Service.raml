@@ -227,6 +227,10 @@ securitySchemes:
             action: "filter_non_exist", // filter non-exist folder id from the given ids
             ids: "6d69b787-15b0-4731-be6c-a76dca76d466,a48c3779-eb14-4697-a490-eeb0125196f4" // the given ids separated by comma
           }
+          {
+            action: "adjust_order", // save order of given folder ids
+            ids: [ "806ead50-303f-11e8-991b-dd66cbda7499", ...] // array of folder ids, array index indicate folder's order
+          }
       responses:
         201:
           body:

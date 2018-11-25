@@ -76,6 +76,7 @@ db.attachments.createIndex({"note_id": 1, "updated_at": -1})
     name: "myFolder",
     parent_id: "8iok1869-895b-47f0-ba2b-e15ca8a5be06", // parent folder id
     deleted: 0, // 0: not deleted, 1: deleted, 2: deleted with parent folder
+    order: 0, // user specified order
 
     // auto managed
     owner: "xxx@xxx.xx", // refer to user_id
@@ -87,6 +88,7 @@ db.attachments.createIndex({"note_id": 1, "updated_at": -1})
 db.folders.createIndex({"owner": 1, "_id": 1})
 db.folders.createIndex({"owner": 1, "usn": 1})
 db.folders.createIndex({"owner": 1, "deleted": 1, "name": 1})
+db.folders.createIndex({"owner": 1, "deleted": 1, "order": 1})
 db.folders.createIndex({"owner": 1, "ancestor_ids": 1, "deleted": 1, "name": 1})
 ```
 

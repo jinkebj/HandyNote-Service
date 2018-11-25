@@ -419,10 +419,9 @@ router.post('/notes/action',
   async ctx => {
     const actionJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
     if (actionJson.action !== undefined && actionJson.action === 'filter_non_exist') {
-      let idArr = actionJson.ids.split(',')
-      let noteIds = await Model.Note.find({_id: {$in: idArr}, deleted: 0}).select('_id')
+      let noteIds = await Model.Note.find({_id: {$in: actionJson.ids}, deleted: 0}).select('_id')
 
-      let idSet = new Set(idArr)
+      let idSet = new Set(actionJson.ids)
       for (let noteId of noteIds) {
         idSet.delete(noteId._id)
       }
@@ -525,7 +524,7 @@ router.get('/folders/tree-info',
       delete queryJson.exclude_id
     }
 
-    let folderData = await Model.Folder.find(queryJson).sort('name')
+    let folderData = await Model.Folder.find(queryJson).sort('order')
     let folderStatisticsData = await Model.Note.aggregate([
       {$match: queryJson},
       {$group: {
@@ -578,10 +577,9 @@ router.post('/folders/action',
   async ctx => {
     const actionJson = (typeof ctx.request.body === 'object' ? ctx.request.body : JSON.parse(ctx.request.body))
     if (actionJson.action !== undefined && actionJson.action === 'filter_non_exist') {
-      let idArr = actionJson.ids.split(',')
-      let folderIds = await Model.Folder.find({_id: {$in: idArr}, deleted: 0}).select('_id')
+      let folderIds = await Model.Folder.find({_id: {$in: actionJson.ids}, deleted: 0}).select('_id')
 
-      let idSet = new Set(idArr)
+      let idSet = new Set(actionJson.ids)
       for (let folderId of folderIds) {
         idSet.delete(folderId._id)
       }

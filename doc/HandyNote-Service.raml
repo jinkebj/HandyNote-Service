@@ -96,13 +96,13 @@ securitySchemes:
         example: |
           {
             action: "filter_non_exist", // filter non-exist node id from the given ids
-            ids: "6d69b787-15b0-4731-be6c-a76dca76d466,a48c3779-eb14-4697-a490-eeb0125196f4" // the given ids separated by comma
+            ids: ["6d69b787-15b0-4731-be6c-a76dca76d466"] // array of the given id
           }
       responses:
         201:
           body:
             example:  |
-              // response for action "filter_non_exist"
+              // for action "filter_non_exist", return array of non-exist id
               ["6d69b787-15b0-4731-be6c-a76dca76d466"]
   /statistics:
     securedBy: [x-auth-token]
@@ -225,17 +225,17 @@ securitySchemes:
         example: |
           {
             action: "filter_non_exist", // filter non-exist folder id from the given ids
-            ids: "6d69b787-15b0-4731-be6c-a76dca76d466,a48c3779-eb14-4697-a490-eeb0125196f4" // the given ids separated by comma
+            ids: ["6d69b787-15b0-4731-be6c-a76dca76d466", ...] // array of the given id
           }
           {
             action: "adjust_order", // save order of given folder ids
-            ids: [ "806ead50-303f-11e8-991b-dd66cbda7499", ...] // array of folder ids, array index indicate folder's order
+            ids: [ "806ead50-303f-11e8-991b-dd66cbda7499", ...] // array of folder id, array index indicate folder's order
           }
       responses:
         201:
           body:
             example:  |
-              // response for action "filter_non_exist"
+              // for action "filter_non_exist", return array of non-exist id
               ["6d69b787-15b0-4731-be6c-a76dca76d466"]
   /statistics:
     securedBy: [x-auth-token]
